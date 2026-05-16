@@ -1,0 +1,8 @@
+{
+  "lb-mail-01": "postfix",
+  "lb-mail-02": "postfix",
+  "lb-web-01": "nginx",
+  "lb-web-02": "nginx",
+  "edge-dns-01": "named",
+  "edge-dns-02": "named"
+}

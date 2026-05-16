@@ -1,0 +1,73 @@
+{
+  "name": "logflow-sim",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Explainable log-pipeline simulator. Parses your routing configuration (rsyslog today; syslog-ng, NXLog, Fluent Bit, Vector planned) and shows exactly where every log goes.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gweber/logflow-sim.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gweber/logflow-sim/issues"
+  },
+  "homepage": "https://github.com/gweber/logflow-sim#readme",
+  "keywords": [
+    "rsyslog",
+    "syslog",
+    "log",
+    "pipeline",
+    "simulator",
+    "parser",
+    "rainerscript",
+    "ci",
+    "github-action",
+    "explainability"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "logflow-sim": "dist/cli/main.js",
+    "logflow-sim-mcp": "dist/mcp/main.js"
+  },
+  "scripts": {
+    "dev:server": "tsx watch src/server.ts",
+    "dev:ui": "vite",
+    "dev": "concurrently -k -n server,ui -c blue,magenta \"npm:dev:server\" \"npm:dev:ui\"",
+    "build:ui": "vite build",
+    "build:server": "tsc -p tsconfig.server.json",
+    "build:extension": "vite build --config extension/vite.config.ts",
+    "build": "npm run build:ui && npm run build:server",
+    "start": "node dist/server.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "fast-glob": "^3.3.3",
+    "fflate": "^0.8.3",
+    "gray-matter": "^4.0.3",
+    "isomorphic-dompurify": "^3.13.0",
+    "js-yaml": "^4.1.1",
+    "marked": "^18.0.3",
+    "smol-toml": "^1.6.1"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.5",
+    "@tailwindcss/vite": "^4.3.0",
+    "@tanstack/react-query": "^5.100.10",
+    "@types/express": "^5.0.6",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^25.8.0",
+    "concurrently": "^9.2.1",
+    "preact": "^10.29.1",
+    "tailwindcss": "^4.3.0",
+    "tsx": "^4.22.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.13",
+    "vitest": "^4.1.6",
+    "wouter-preact": "^3.9.0"
+  }
+}

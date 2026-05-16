@@ -1,0 +1,59 @@
+[
+  {
+    "name": "sshd is classified via the rsyslog-native lookup table",
+    "input": {
+      "transport": "udp", "port": 514,
+      "fromhost": "host1", "fromhostIp": "10.0.0.1",
+      "hostname": "host1", "programname": "sshd",
+      "rawmsg": "<86>sshd[1234]: Accepted publickey for root",
+      "msg": "Accepted publickey for root"
+    },
+    "expect": {
+      "ruleset": "catchall",
+      "stopped": true,
+      "structured": { "sourcetype": "linux:secure" },
+      "outputsContains": [
+        { "kind": "omfile", "pathContains": "/linux:secure/host1/" },
+        { "kind": "omfwd",  "target": "collector.netverdict.io", "port": 6515, "protocol": "tcp" }
+      ]
+    }
+  },
+  {
+    "name": "Unknown programname on an alias host resolves via host_aliases",
+    "input": {
+      "transport": "udp", "port": 514,
+      "fromhost": "lb-mail-01", "fromhostIp": "10.0.0.50",
+      "hostname": "lb-mail-01", "programname": "unknown-relay",
+      "rawmsg": "<22>unknown-relay: delivery report",
+      "msg": "delivery report"
+    },
+    "expect": {
+      "ruleset": "catchall",
+      "structured": { "sourcetype": "mail:postfix" }
+    }
+  },
+  {
+    "name": "Zscaler DNS signature inside $rawmsg wins over programname lookup",
+    "input": {
+      "transport": "udp", "port": 514,
+      "fromhost": "edge-1", "hostname": "edge-1", "programname": "zscaler",
+      "rawmsg": "<134>zscaler-dns event payload",
+      "msg": "zscaler-dns event payload"
+    },
+    "expect": {
+      "structured": { "sourcetype": "zscaler:dns" }
+    }
+  },
+  {
+    "name": "Unrecognized message falls through to syslog sourcetype",
+    "input": {
+      "transport": "udp", "port": 514,
+      "fromhost": "appsrv01", "hostname": "appsrv01", "programname": "myapp",
+      "rawmsg": "<134>myapp: starting up",
+      "msg": "starting up"
+    },
+    "expect": {
+      "structured": { "sourcetype": "syslog" }
+    }
+  }
+]

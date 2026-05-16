@@ -1,0 +1,88 @@
+# logflow-sim
+
+> Open-source explainable log-pipeline simulator. Parses, validates,
+> replays, diffs, and migrates log-routing configurations across 10
+> dialects (rsyslog, syslog-ng, Fluent Bit, Vector, OpenTelemetry
+> Collector, NXLog, Logstash, Filebeat, Promtail, Fluentd) with built-in
+> Sigma detection-coverage analysis.
+
+Live demo: https://netverdict.io/logflow/
+Broken-config validator showcase: https://netverdict.io/logflow-broken/
+Source code: https://github.com/gweber/logflow-sim
+License: MIT
+Maintainer: netverdict.io
+
+## What problem this solves
+
+Log-routing configs (rsyslog.conf, vector.toml, otel-collector.yaml, …)
+are notoriously hard to reason about. Operators discover routing
+regressions hours after merge when their SIEM goes quiet on a critical
+source. logflow-sim turns the config into a normalized intermediate
+representation and answers four operational questions:
+
+1. **What does my config do?** — `simulate` shows the step-by-step
+   trace for a single message: input selected, ruleset entered,
+   conditions evaluated, lookups performed, variables changed, actions
+   fired — each with the source file:line that produced the decision.
+2. **What happens to my real traffic?** — `replay` runs a batch of
+   syslog (text or pcap) through the config and reports aggregates:
+   per-ruleset volume, per-output-target volume, top programs,
+   silent-drop samples.
+3. **What changes if I merge this PR?** — `diff` replays the same batch
+   through baseline + overlay variants and reports per-output and
+   per-ruleset deltas plus side-by-side per-message route changes.
+4. **Will my detection rules still fire?** — `detection-impact` runs
+   Sigma rules against the replay corpus; `detection/diff` shows
+   per-rule firing deltas (the SOC-coverage equivalent of routing
+   diff).
+
+## Key documentation
+
+- /docs/getting-started — install + first run
+- /docs/api — REST API reference (every endpoint, JSON shapes,
+  error format `{ error: { code, message, context } }`)
+- /docs/supported-syntax — which rsyslog constructs are supported
+- /docs/limitations — known gaps (queue semantics not simulated, no
+  real file/network IO, no TLS-in-pcap)
+
+## CLI surface
+
+- `logflow-sim parse <conf-dir>` — parse + validator findings
+- `logflow-sim test <conf-dir>` — parse + run conf/tests/*.json
+- `logflow-sim simulate <conf-dir> --input=msg.json` — one message
+- `logflow-sim replay <conf-dir> (--lines=FILE | --pcap=FILE)` — batch
+- `logflow-sim diff <conf-dir> --overlay-dir=DIR --lines=FILE --max-route-change-pct=N`
+- `logflow-sim convert <conf-dir> --target=DIALECT --out-dir=PATH`
+- `logflow-sim detection-impact <conf-dir> --sigma=RULE.yml --lines=corpus.log`
+- `logflow-sim detection-diff <conf-dir> --sigma=RULE.yml --overlay-dir=DIR --lines=corpus.log`
+
+Exit codes: 0 success · 1 diagnostic / threshold breach · 2 test
+failures · 3 bad invocation. `--format=github` emits
+GitHub-Actions-annotation lines.
+
+## GitHub Action
+
+`gweber/logflow-sim@v1` — wraps the CLI for CI. The `command: diff`
+flavor posts a sticky PR comment with the routing-impact verdict and
+exits non-zero if `--max-route-change-pct` is breached.
+
+## REST API surface (mounted at /api on the running server)
+
+- POST /api/simulate — body `{ transport, port, programname, msg, ... }`
+- POST /api/replay/lines — body `{ text | lines | ndjson, maxMessages? }`
+- POST /api/replay/pcap — body `{ pcapBase64, maxMessages? }`
+- POST /api/replay/diff — body `{ overlay: {path: content}, text | pcapBase64 }`
+- POST /api/convert — body `{ target: "<dialect>" }` → multi-file output
+- POST /api/detection/impact — body `{ sigmaText | sigma, text | pcapBase64 }`
+- POST /api/detection/diff — body `{ sigmaText, overlay, text | pcapBase64 }`
+- GET  /api/config/parse — model summary + parse + validator findings
+- GET  /api/config/tree — file listing
+- GET  /api/config/file?path=... — raw file contents
+- GET  /api/dialects — registered dialects + display names
+
+## Contribution surface
+
+Validation rules (~50 LOC each), dialects (~200 LOC each), and i18n
+translations (one JSON file each) are the contribution levers most
+in demand. See CONTRIBUTING.md and .github/GOOD_FIRST_ISSUES.md in the
+repo.

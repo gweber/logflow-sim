@@ -1,0 +1,1 @@
+chrome.runtime.onMessage.addListener((e,t,n)=>(e?.type===`openPopup`&&(chrome.action.setBadgeText({text:`!`}),chrome.action.setBadgeBackgroundColor({color:`#0ea5e9`}),n({ok:!0})),!0));

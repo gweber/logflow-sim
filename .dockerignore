@@ -1,0 +1,9 @@
+node_modules
+dist
+.git
+.vscode
+test
+*.md
+!README.md
+conf
+content

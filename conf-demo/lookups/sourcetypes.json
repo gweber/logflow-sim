@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "nomatch": "",
+  "type": "string",
+  "table": [
+    { "index": "sshd",       "value": "linux:secure" },
+    { "index": "sudo",       "value": "linux:secure" },
+    { "index": "su",         "value": "linux:secure" },
+    { "index": "cron",       "value": "linux:cron" },
+    { "index": "kernel",     "value": "linux:kernel" },
+    { "index": "systemd",    "value": "linux:systemd" },
+    { "index": "nginx",      "value": "nginx:access" },
+    { "index": "haproxy",    "value": "haproxy:access" },
+    { "index": "postfix",    "value": "mail:postfix" },
+    { "index": "named",      "value": "bind:query" },
+    { "index": "dhcpd",      "value": "isc:dhcp" }
+  ]
+}

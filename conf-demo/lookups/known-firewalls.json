@@ -1,0 +1,7 @@
+[
+  { "key": "fw-eu-01",  "value": "site:frankfurt,vendor:paloalto" },
+  { "key": "fw-eu-02",  "value": "site:frankfurt,vendor:paloalto" },
+  { "key": "fw-us-01",  "value": "site:ashburn,vendor:checkpoint" },
+  { "key": "fw-us-02",  "value": "site:ashburn,vendor:checkpoint" },
+  { "key": "fw-apac-01","value": "site:singapore,vendor:paloalto" }
+]

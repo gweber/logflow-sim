@@ -1,0 +1,210 @@
+name: logflow-sim
+description: >-
+  Validate rsyslog (and other log-pipeline) configurations in CI. Parses
+  the config, runs expectation tests, and — with `command: diff` — compares
+  routing across a config change using a replay corpus.
+
+branding:
+  icon: shuffle
+  color: blue
+
+inputs:
+  conf-path:
+    description: Directory containing the baseline configuration.
+    required: true
+  entrypoint:
+    description: Entrypoint filename within conf-path.
+    required: false
+    default: rsyslog.conf
+  command:
+    description: One of `parse`, `test`, `simulate`, `replay`, `diff`.
+    required: false
+    default: test
+  tests-path:
+    description: Directory of expectation files. Defaults to `<conf-path>/tests`.
+    required: false
+    default: ''
+  fail-on:
+    description: Severity threshold for parse/test — `errors`, `warnings`, or `never`.
+    required: false
+    default: errors
+  input:
+    description: Path to a JSON file for the `simulate` command.
+    required: false
+    default: ''
+  lines:
+    description: Path to a file with newline-separated syslog lines (replay/diff).
+    required: false
+    default: ''
+  pcap:
+    description: Path to a libpcap classic file (replay/diff).
+    required: false
+    default: ''
+  max-messages:
+    description: Hard cap on processed messages for replay/diff.
+    required: false
+    default: '50000'
+  overlay-dir:
+    description: For `diff` — directory mirroring conf-path with overlay file content.
+    required: false
+    default: ''
+  overlay-files:
+    description: >-
+      For `diff` — newline-separated list of files to use as the overlay.
+      Paths are read from disk and slotted into conf-path-relative positions.
+    required: false
+    default: ''
+  max-route-changes:
+    description: For `diff` — fail when route changes exceed this absolute count.
+    required: false
+    default: ''
+  max-route-change-pct:
+    description: For `diff` — fail when route change percentage exceeds this value.
+    required: false
+    default: ''
+  pr-comment:
+    description: Post a sticky comment on the PR with the diff verdict. Requires `pull-requests: write` permission.
+    required: false
+    default: 'true'
+  github-token:
+    description: Token used to post the PR comment. Defaults to GITHUB_TOKEN.
+    required: false
+    default: ${{ github.token }}
+  node-version:
+    description: Node version to install for running the simulator.
+    required: false
+    default: '20'
+
+outputs:
+  route-changes:
+    description: Number of messages whose routing changed (diff only).
+    value: ${{ steps.run.outputs.route_changes }}
+  route-change-pct:
+    description: Percentage of messages whose routing changed (diff only).
+    value: ${{ steps.run.outputs.route_change_pct }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Install logflow-sim
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        # Full install (incl. devDependencies) because the action builds the
+        # server-side bundle at runtime — `tsc` itself lives in devDeps.
+        # Adds ~10s vs. --omit=dev; saves committing dist/ to the repo.
+        npm ci --no-audit --no-fund
+        npm run build:server --silent
+
+    - name: Run logflow-sim ${{ inputs.command }}
+      id: run
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        CONF_PATH: ${{ inputs.conf-path }}
+        ENTRYPOINT: ${{ inputs.entrypoint }}
+        COMMAND: ${{ inputs.command }}
+        TESTS_PATH: ${{ inputs.tests-path }}
+        FAIL_ON: ${{ inputs.fail-on }}
+        INPUT_FILE: ${{ inputs.input }}
+        LINES: ${{ inputs.lines }}
+        PCAP: ${{ inputs.pcap }}
+        MAX_MESSAGES: ${{ inputs.max-messages }}
+        OVERLAY_DIR: ${{ inputs.overlay-dir }}
+        OVERLAY_FILES: ${{ inputs.overlay-files }}
+        MAX_ROUTE_CHANGES: ${{ inputs.max-route-changes }}
+        MAX_ROUTE_CHANGE_PCT: ${{ inputs.max-route-change-pct }}
+      run: |
+        set -euo pipefail
+        ARGS=("$COMMAND" "$CONF_PATH" "--entrypoint=$ENTRYPOINT" "--fail-on=$FAIL_ON" "--format=github")
+        if [ -n "$TESTS_PATH" ]; then ARGS+=("--tests=$TESTS_PATH"); fi
+        if [ -n "$INPUT_FILE" ]; then ARGS+=("--input=$INPUT_FILE"); fi
+        if [ -n "$LINES" ]; then ARGS+=("--lines=$LINES"); fi
+        if [ -n "$PCAP" ]; then ARGS+=("--pcap=$PCAP"); fi
+        if [ -n "$MAX_MESSAGES" ]; then ARGS+=("--max-messages=$MAX_MESSAGES"); fi
+        if [ -n "$OVERLAY_DIR" ]; then ARGS+=("--overlay-dir=$OVERLAY_DIR"); fi
+        if [ -n "$OVERLAY_FILES" ]; then
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            ARGS+=("--overlay-file=$f")
+          done <<< "$OVERLAY_FILES"
+        fi
+        if [ -n "$MAX_ROUTE_CHANGES" ]; then ARGS+=("--max-route-changes=$MAX_ROUTE_CHANGES"); fi
+        if [ -n "$MAX_ROUTE_CHANGE_PCT" ]; then ARGS+=("--max-route-change-pct=$MAX_ROUTE_CHANGE_PCT"); fi
+
+        if [ "$COMMAND" = "diff" ]; then
+          # For PR commenting we also need the machine-readable verdict; run
+          # the same thing twice would double-cost — instead emit json to a
+          # side channel and the github-format to the log.
+          node "$ACTION_PATH/dist/cli/main.js" "${ARGS[@]}"
+          # Re-run with json format for output extraction (cheap, in-process).
+          JSON_ARGS=()
+          for a in "${ARGS[@]}"; do
+            JSON_ARGS+=("${a/--format=github/--format=json}")
+          done
+          node "$ACTION_PATH/dist/cli/main.js" "${JSON_ARGS[@]}" > "$RUNNER_TEMP/logflow-diff.json" || true
+          ROUTE_CHANGES=$(jq -r '.diff.routeChanges // 0' "$RUNNER_TEMP/logflow-diff.json")
+          PROCESSED=$(jq -r '.diff.baseline.processed // 0' "$RUNNER_TEMP/logflow-diff.json")
+          if [ "$PROCESSED" -gt 0 ]; then
+            PCT=$(awk -v rc="$ROUTE_CHANGES" -v p="$PROCESSED" 'BEGIN { printf "%.2f", rc/p*100 }')
+          else
+            PCT=0.00
+          fi
+          echo "route_changes=$ROUTE_CHANGES" >> "$GITHUB_OUTPUT"
+          echo "route_change_pct=$PCT" >> "$GITHUB_OUTPUT"
+          cp "$RUNNER_TEMP/logflow-diff.json" "$RUNNER_TEMP/logflow-diff-final.json"
+        else
+          node "$ACTION_PATH/dist/cli/main.js" "${ARGS[@]}"
+        fi
+
+    - name: Post PR comment (diff verdict)
+      if: ${{ inputs.command == 'diff' && inputs.pr-comment == 'true' && github.event_name == 'pull_request' }}
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          const diffPath = path.join(process.env.RUNNER_TEMP, 'logflow-diff-final.json');
+          if (!fs.existsSync(diffPath)) return;
+          const { overlayFiles, diff } = JSON.parse(fs.readFileSync(diffPath, 'utf8'));
+          const processed = diff.baseline.processed;
+          const pct = processed > 0 ? (diff.routeChanges / processed * 100).toFixed(2) : '0.00';
+          const top = (diff.outputDeltas || []).slice(0, 8).map(o =>
+            `| \`${o.kind}\` | \`${o.target}\` | ${o.baseline} | ${o.overlay} | **${o.delta > 0 ? '+' : ''}${o.delta}** |`
+          ).join('\n');
+          const samples = (diff.routeChangeSamples || []).slice(0, 3).map(s => {
+            const base = s.baselineOutputs.length ? s.baselineOutputs.join(', ') : '_dropped_';
+            const over = s.overlayOutputs.length ? s.overlayOutputs.join(', ') : '_dropped_';
+            return `- \`${s.programname || '?'}\` @ \`${s.hostname || '?'}\`\n    - baseline: ${base}\n    - overlay: ${over}`;
+          }).join('\n');
+          const body = [
+            '<!-- logflow-sim -->',
+            '### logflow-sim diff verdict',
+            '',
+            `**${diff.routeChanges}** of **${processed}** messages change routing (**${pct}%**) · `,
+            `moved-to-delivered: **+${diff.movedToDelivered}** · `,
+            `moved-to-unmatched: **−${diff.movedToUnmatched}**`,
+            '',
+            `Overlay: ${overlayFiles.map(f => `\`${f}\``).join(', ')}`,
+            '',
+            '| kind | target | baseline | overlay | delta |',
+            '|------|--------|---------:|--------:|------:|',
+            top || '| _no output deltas_ |  |  |  |  |',
+            '',
+            samples ? '#### Sample route changes\n' + samples : ''
+          ].join('\n');
+          const { owner, repo } = context.repo;
+          const issue_number = context.issue.number;
+          const { data: existing } = await github.rest.issues.listComments({ owner, repo, issue_number });
+          const prior = existing.find(c => c.body && c.body.startsWith('<!-- logflow-sim -->'));
+          if (prior) {
+            await github.rest.issues.updateComment({ owner, repo, comment_id: prior.id, body });
+          } else {
+            await github.rest.issues.createComment({ owner, repo, issue_number, body });
+          }

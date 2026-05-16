@@ -1,0 +1,32 @@
+:root {
+  /* Light theme tokens */
+  --c-bg: 250 250 252;
+  --c-bg-subtle: 244 244 248;
+  --c-bg-elev: 255 255 255;
+  --c-fg: 15 23 42;
+  --c-fg-muted: 71 85 105;
+  --c-fg-subtle: 100 116 139;
+  --c-border: 226 232 240;
+  --c-border-strong: 203 213 225;
+  --c-accent: 14 165 233;
+  --c-accent-fg: 255 255 255;
+  --c-danger: 220 38 38;
+  --c-warn: 217 119 6;
+  --c-ok: 22 163 74;
+}
+
+html.dark {
+  --c-bg: 9 13 22;
+  --c-bg-subtle: 14 19 31;
+  --c-bg-elev: 19 25 38;
+  --c-fg: 226 232 240;
+  --c-fg-muted: 148 163 184;
+  --c-fg-subtle: 100 116 139;
+  --c-border: 30 41 59;
+  --c-border-strong: 51 65 85;
+  --c-accent: 56 189 248;
+  --c-accent-fg: 6 11 20;
+  --c-danger: 248 113 113;
+  --c-warn: 251 191 36;
+  --c-ok: 74 222 128;
+}

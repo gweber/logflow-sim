@@ -1,0 +1,58 @@
+{
+  "dokku-k3s.yaml": {
+    "errors": 0,
+    "warnings": 0,
+    "info": 0,
+    "inputs": 0,
+    "rulesets": 0,
+    "templates": 0,
+    "lookupTables": 0,
+    "modules": 0,
+    "unknownStatements": 0,
+    "outputs": 0,
+    "filters": 0,
+    "routes": 0
+  },
+  "fly-log-shipper.toml": {
+    "errors": 0,
+    "warnings": 0,
+    "info": 0,
+    "inputs": 2,
+    "rulesets": 0,
+    "templates": 0,
+    "lookupTables": 0,
+    "modules": 1,
+    "unknownStatements": 0,
+    "outputs": 2,
+    "filters": 0,
+    "routes": 2
+  },
+  "redis-otel.toml": {
+    "errors": 0,
+    "warnings": 0,
+    "info": 0,
+    "inputs": 4,
+    "rulesets": 0,
+    "templates": 0,
+    "lookupTables": 0,
+    "modules": 1,
+    "unknownStatements": 0,
+    "outputs": 1,
+    "filters": 0,
+    "routes": 1
+  },
+  "vectordotdev.yaml": {
+    "errors": 0,
+    "warnings": 0,
+    "info": 0,
+    "inputs": 1,
+    "rulesets": 0,
+    "templates": 0,
+    "lookupTables": 0,
+    "modules": 1,
+    "unknownStatements": 0,
+    "outputs": 1,
+    "filters": 0,
+    "routes": 1
+  }
+}

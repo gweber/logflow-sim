@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "logflow-sim",
+  "short_name": "logflow",
+  "version": "0.1.0",
+  "description": "Inspect, simulate, and convert rsyslog / syslog-ng / Fluent Bit / NXLog / Logstash / Vector configurations directly in the browser. No data leaves your machine.",
+  "minimum_chrome_version": "111",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_title": "logflow-sim",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon-16.png",
+      "48": "icon-48.png",
+      "128": "icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icon-16.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["popup.html", "*.js", "*.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

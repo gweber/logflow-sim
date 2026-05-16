@@ -1,0 +1,2 @@
+Drop your rsyslog configuration files here. See ../conf-demo/ for a worked example.
+This directory is gitignored except for this file.

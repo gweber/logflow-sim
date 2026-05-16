@@ -1,0 +1,37 @@
+name: Validate rsyslog configuration
+
+on:
+  pull_request:
+    paths:
+      - 'rsyslog/**'
+      - 'etc/rsyslog.d/**'
+      - '.github/workflows/validate-rsyslog.yml'
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Parse the config and surface every diagnostic as a PR annotation.
+      - name: Parse
+        uses: gweber/logflow-sim@v1
+        with:
+          conf-path: ./rsyslog
+          entrypoint: rsyslog.conf
+          command: parse
+          fail-on: errors
+
+      # Run all expectation files under rsyslog/tests/*.json.
+      - name: Run test cases
+        uses: gweber/logflow-sim@v1
+        with:
+          conf-path: ./rsyslog
+          command: test
+          fail-on: errors

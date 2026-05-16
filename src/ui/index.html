@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Open-source explainable log-pipeline simulator. Parse, validate, replay, diff, and migrate rsyslog / syslog-ng / Fluent Bit / Vector / OpenTelemetry Collector / NXLog / Logstash / Filebeat / Promtail / Fluentd configs — with Sigma detection-coverage analysis built in." />
+    <meta name="keywords" content="rsyslog, syslog-ng, fluent bit, vector, opentelemetry collector, filebeat, promtail, fluentd, log pipeline, sigma rules, soc, siem, observability, log routing, validator, simulator, diff, ci, github action" />
+    <meta name="author" content="netverdict.io" />
+
+    <link rel="canonical" href="https://netverdict.io/logflow/" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230ea5e9'/%3E%3Cpath d='M9 11h14M9 16h10M9 21h14' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E" />
+    <title>logflow-sim — explainable log-pipeline simulator</title>
+
+    <!-- OpenGraph (for Mastodon, Bluesky, Slack, Discord, Twitter, LinkedIn) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="netverdict.io · logflow-sim" />
+    <meta property="og:title" content="logflow-sim — explainable log-pipeline simulator" />
+    <meta property="og:description" content="See exactly where every log goes. Replay real syslog through your rsyslog / syslog-ng / Vector / OpenTelemetry config; diff routing changes pre-merge; check Sigma detection coverage. Open-source, MIT." />
+    <meta property="og:url" content="https://netverdict.io/logflow/" />
+    <meta property="og:image" content="https://netverdict.io/logflow/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="logflow-sim — Know exactly where every log goes." />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="de_DE" />
+
+    <!-- Twitter / X cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="logflow-sim — explainable log-pipeline simulator" />
+    <meta name="twitter:description" content="Replay real syslog through your config. Diff routing changes pre-merge. Check Sigma detection coverage. Open-source." />
+    <meta name="twitter:image" content="https://netverdict.io/logflow/og.png" />
+
+    <!-- Structured data (Schema.org / JSON-LD). Helps Google + LLM
+         retrieval surface the project as a SoftwareApplication, not just
+         a generic landing page. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "logflow-sim",
+        "alternateName": "Logflow Simulator",
+        "description": "Explainable log-pipeline simulator. Parses, validates, simulates, replays, and diffs log-routing configurations across 10 dialects (rsyslog, syslog-ng, Fluent Bit, Vector, OpenTelemetry Collector, NXLog, Logstash, Filebeat, Promtail, Fluentd) with Sigma detection-coverage analysis.",
+        "applicationCategory": "DeveloperApplication",
+        "applicationSubCategory": "Observability",
+        "operatingSystem": "Linux, macOS, Windows (via Node 20+)",
+        "softwareVersion": "0.1.0",
+        "license": "https://opensource.org/licenses/MIT",
+        "url": "https://netverdict.io/logflow/",
+        "codeRepository": "https://github.com/gweber/logflow-sim",
+        "programmingLanguage": "TypeScript",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "author": { "@type": "Organization", "name": "netverdict.io", "url": "https://netverdict.io" }
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <script>
+      // Avoid theme flash: apply persisted/system theme before paint.
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="bg-bg text-fg antialiased">
+    <div id="app"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,60 @@
+name: Diff rsyslog routing
+
+# Runs on every PR that touches the rsyslog config. Replays a fixed corpus
+# of real syslog lines (or a captured pcap) through the live config and the
+# PR-branch overlay, and posts a sticky comment showing which messages will
+# route differently after merge.
+#
+# Block the merge with --max-route-change-pct if you want a hard threshold:
+# > 5% of traffic moving is rarely intentional.
+
+on:
+  pull_request:
+    paths:
+      - 'rsyslog/**'
+      - '.github/workflows/diff-rsyslog.yml'
+
+permissions:
+  contents: read
+  pull-requests: write   # required to post the verdict comment
+
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+    steps:
+      # Baseline = the PR's base ref (usually `main`). We check it out into
+      # its own subdirectory so we have both sides on disk simultaneously.
+      - name: Checkout base
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+
+      - name: Checkout head
+        uses: actions/checkout@v4
+        with:
+          path: head
+
+      # Replay corpus: pick whichever matches your operational reality —
+      # a curated set of real syslog lines (text) or a wire-captured pcap.
+      # If you don't have one yet, sample a few minutes of real traffic with
+      #   sudo tcpdump -i any -w corpus.pcap 'port 514 or port 6514'
+      # and commit the resulting file under test/fixtures/.
+      - name: Run diff
+        id: diff
+        uses: gweber/logflow-sim@v1
+        with:
+          command: diff
+          conf-path: base/rsyslog
+          overlay-dir: head/rsyslog
+          lines: head/test/fixtures/replay-corpus.log
+          max-route-change-pct: '5'
+          pr-comment: 'true'
+
+      # The action exits 1 when the threshold is exceeded; this step is just
+      # informational and surfaces the numbers in the job log.
+      - name: Echo summary
+        if: always()
+        run: |
+          echo "Route changes: ${{ steps.diff.outputs.route-changes }}"
+          echo "Route change pct: ${{ steps.diff.outputs.route-change-pct }}%"

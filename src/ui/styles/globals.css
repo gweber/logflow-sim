@@ -1,0 +1,221 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/*
+ * Tailwind v4 uses a CSS-first configuration. We keep dark mode toggleable
+ * via a class on <html> (.dark), matching the no-flash inline script in
+ * index.html. The custom variant below is the v4 equivalent of v3's
+ * darkMode: 'class' option.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens. The underlying RGB triplets live in tokens.css so the
+ * runtime theme toggle still works (each token is a `R G B` triple that
+ * Tailwind composes with `<alpha-value>`). Listing them here registers
+ * the matching utility classes (bg-bg, text-fg-muted, border-border-strong,
+ * bg-accent/40 etc.).
+ */
+/*
+ * `@theme inline` keeps the CSS variables un-resolved at build time so the
+ * runtime .dark class swap still works. Without `inline`, Tailwind v4 would
+ * bake light-theme values into utilities at build time and the dark toggle
+ * would have no effect.
+ *
+ * The `<alpha-value>` placeholder from v3 was dropped in v4 — opacity
+ * modifiers (bg-accent/40) now go through color-mix() automatically based
+ * on the resolved color.
+ */
+@theme inline {
+  --color-bg: rgb(var(--c-bg));
+  --color-bg-subtle: rgb(var(--c-bg-subtle));
+  --color-bg-elev: rgb(var(--c-bg-elev));
+
+  --color-fg: rgb(var(--c-fg));
+  --color-fg-muted: rgb(var(--c-fg-muted));
+  --color-fg-subtle: rgb(var(--c-fg-subtle));
+
+  --color-border: rgb(var(--c-border));
+  --color-border-strong: rgb(var(--c-border-strong));
+
+  --color-accent: rgb(var(--c-accent));
+  --color-accent-fg: rgb(var(--c-accent-fg));
+
+  --color-danger: rgb(var(--c-danger));
+  --color-warn: rgb(var(--c-warn));
+  --color-ok: rgb(var(--c-ok));
+
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/*
+ * Tailwind v4 stops auto-applying the v3 default border color. We replicate
+ * the v3 behavior so existing `border` utility usage keeps rendering the
+ * neutral border we expect.
+ */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-border, currentColor);
+  }
+  html {
+    color-scheme: light dark;
+    -webkit-text-size-adjust: 100%;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  code,
+  pre,
+  kbd,
+  samp {
+    font-family: var(--font-mono);
+  }
+  ::selection {
+    background: rgb(var(--c-accent) / 0.25);
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--c-border-strong));
+    border-radius: 8px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--c-fg-subtle));
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-bg-elev border border-border rounded-xl;
+  }
+
+  /*
+   * Tailwind v4 forbids @apply of custom classes from other custom classes,
+   * so the button base is applied to every variant via a shared selector
+   * list rather than via inheritance.
+   */
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors border border-transparent min-h-[36px];
+  }
+  .btn-primary {
+    @apply bg-accent text-accent-fg hover:opacity-90 active:opacity-100;
+  }
+  .btn-secondary {
+    @apply bg-bg-subtle border-border text-fg hover:bg-bg-elev;
+  }
+  .btn-ghost {
+    @apply text-fg-muted hover:text-fg hover:bg-bg-subtle;
+  }
+  .input {
+    @apply w-full bg-bg-elev border border-border rounded-lg px-3 py-2 text-sm
+           focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent
+           placeholder:text-fg-subtle min-h-[36px];
+  }
+  .label {
+    @apply block text-xs font-medium text-fg-muted mb-1.5;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-md border border-border bg-bg-subtle px-2 py-1 text-xs text-fg-muted;
+  }
+
+  /*
+   * Touch-only devices (no hover capability) get larger hit targets and
+   * 16px input font-size — both Apple HIG / Material guidelines, and the
+   * 16px input prevents iOS Safari from auto-zooming on focus.
+   */
+  @media (hover: none) {
+    .btn,
+    .btn-primary,
+    .btn-secondary,
+    .btn-ghost {
+      @apply min-h-[44px] py-2.5;
+    }
+    .input,
+    select.input,
+    textarea.input {
+      @apply min-h-[44px] text-base;
+    }
+    .chip {
+      @apply min-h-[32px] px-2.5;
+    }
+  }
+  .kbd {
+    @apply inline-flex items-center justify-center min-w-[1.5rem] h-5 px-1 rounded border border-border bg-bg-subtle text-[10px] font-mono text-fg-muted;
+  }
+  .prose-doc {
+    @apply max-w-none text-fg;
+  }
+  .prose-doc h1 {
+    @apply text-3xl font-bold mt-2 mb-6 tracking-tight;
+  }
+  .prose-doc h2 {
+    @apply text-2xl font-semibold mt-10 mb-4 tracking-tight;
+  }
+  .prose-doc h3 {
+    @apply text-xl font-semibold mt-8 mb-3;
+  }
+  .prose-doc p {
+    @apply leading-7 my-4 text-fg;
+  }
+  .prose-doc a {
+    @apply text-accent underline-offset-2 hover:underline;
+  }
+  .prose-doc ul {
+    @apply list-disc pl-6 my-3 space-y-1;
+  }
+  .prose-doc ol {
+    @apply list-decimal pl-6 my-3 space-y-1;
+  }
+  .prose-doc li {
+    @apply leading-7;
+  }
+  .prose-doc code:not(pre code) {
+    @apply rounded bg-bg-subtle border border-border px-1.5 py-0.5 text-[0.85em];
+  }
+  .prose-doc pre {
+    @apply bg-bg-subtle border border-border rounded-lg p-4 overflow-x-auto text-sm my-4;
+  }
+  .prose-doc blockquote {
+    @apply border-l-4 border-accent pl-4 italic text-fg-muted my-4;
+  }
+  .prose-doc table {
+    @apply w-full text-sm my-4 border-collapse;
+  }
+  .prose-doc th,
+  .prose-doc td {
+    @apply border border-border px-3 py-1.5 text-left;
+  }
+  .prose-doc th {
+    @apply bg-bg-subtle font-semibold;
+  }
+
+  .badge-error {
+    @apply inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium bg-danger/10 text-danger border border-danger/30;
+  }
+  .badge-warning {
+    @apply inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium bg-warn/10 text-warn border border-warn/30;
+  }
+  .badge-info {
+    @apply inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium bg-accent/10 text-accent border border-accent/30;
+  }
+  .badge-ok {
+    @apply inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium bg-ok/10 text-ok border border-ok/30;
+  }
+}

@@ -1,0 +1,55 @@
+[
+  {
+    "name": "Check Point originsicname extraction routes by extracted hostname",
+    "input": {
+      "transport": "udp", "port": 6514,
+      "fromhost": "syslog-relay-01", "fromhostIp": "10.10.10.5",
+      "hostname": "syslog-relay-01", "programname": "checkpoint",
+      "rawmsg": "<134>CEF:0|Check Point|Security Gateway|R81|deny|originsicname=CN=fweu01,OU=corp",
+      "msg":    "CEF:0|Check Point|Security Gateway|R81|deny|originsicname=CN=fweu01,OU=corp"
+    },
+    "expect": {
+      "ruleset": "firewall_rs",
+      "stopped": true,
+      "structured": {
+        "extracted_host": "fweu01",
+        "sourcetype": "pan:traffic:unknown_device"
+      },
+      "outputsContains": [
+        { "kind": "omfile", "pathContains": "/firewall/fweu01/" }
+      ]
+    }
+  },
+  {
+    "name": "Known firewall is tagged with pan:traffic (not the unknown variant)",
+    "input": {
+      "transport": "udp", "port": 6514,
+      "fromhost": "syslog-relay-01", "fromhostIp": "10.10.10.5",
+      "hostname": "syslog-relay-01", "programname": "paloalto",
+      "rawmsg": "<134>CEF:0|Palo Alto|PAN-OS|10|allow|dvc=fw-eu-01,act=permit",
+      "msg":    "CEF:0|Palo Alto|PAN-OS|10|allow|dvc=fw-eu-01,act=permit"
+    },
+    "expect": {
+      "structured": {
+        "extracted_host": "fw-eu-01",
+        "sourcetype": "pan:traffic"
+      },
+      "outputsContains": [
+        { "kind": "omfile", "pathContains": "/firewall/fw-eu-01/" }
+      ]
+    }
+  },
+  {
+    "name": "No extractable hostname falls back to $fromhost (lowercased)",
+    "input": {
+      "transport": "udp", "port": 6514,
+      "fromhost": "Edge-Relay-02", "fromhostIp": "10.10.10.6",
+      "hostname": "Edge-Relay-02", "programname": "firewall",
+      "rawmsg": "<134>opaque firewall event with no dvc or sic name",
+      "msg":    "opaque firewall event with no dvc or sic name"
+    },
+    "expect": {
+      "structured": { "extracted_host": "edge-relay-02" }
+    }
+  }
+]

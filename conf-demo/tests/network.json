@@ -1,0 +1,45 @@
+[
+  {
+    "name": "Cisco IOS message classified as cisco:* by lowercased programname",
+    "input": {
+      "transport": "tcp", "port": 6601,
+      "fromhost": "core-switch-01", "fromhostIp": "10.20.0.1",
+      "hostname": "core-switch-01", "programname": "CISCO-IOS-SW",
+      "rawmsg": "<189>CISCO-IOS-SW: %LINK-3-UPDOWN: Interface GigabitEthernet0/1 changed state",
+      "msg":    "%LINK-3-UPDOWN: Interface GigabitEthernet0/1 changed state"
+    },
+    "expect": {
+      "ruleset": "network_rs",
+      "stopped": true,
+      "structured": { "sourcetype": "cisco:cisco-ios-sw" }
+    }
+  },
+  {
+    "name": "Critical severity also fans out to alerts forwarder",
+    "input": {
+      "transport": "tcp", "port": 6601,
+      "fromhost": "core-switch-01", "hostname": "core-switch-01",
+      "programname": "cisco-asa",
+      "rawmsg": "<10>cisco-asa: emergency: power supply failed",
+      "msg":    "emergency: power supply failed"
+    },
+    "expect": {
+      "structured": { "alert": "1", "sourcetype": "cisco:cisco-asa" },
+      "outputsContains": [
+        { "kind": "omfwd", "target": "alerts.netverdict.io" }
+      ]
+    }
+  },
+  {
+    "name": "Unknown vendor on network port is tagged network:unclassified",
+    "input": {
+      "transport": "tcp", "port": 6601,
+      "fromhost": "weirdbox", "hostname": "weirdbox", "programname": "weird",
+      "rawmsg": "<134>weird: something happened",
+      "msg":    "something happened"
+    },
+    "expect": {
+      "structured": { "sourcetype": "network:unclassified" }
+    }
+  }
+]

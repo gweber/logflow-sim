@@ -1,0 +1,22 @@
+# Coordinated disclosure for logflow-sim.
+#
+# Format: RFC 9116 (https://www.rfc-editor.org/rfc/rfc9116.html).
+# Mirror this file at both /.well-known/security.txt (recommended) and
+# /security.txt (legacy) on every deployment.
+#
+# Reporting channel: open a Private Vulnerability Report on GitHub —
+# https://github.com/gweber/logflow-sim/security/advisories/new
+# That keeps the disclosure private until a fix lands; the reporter is
+# credited in the advisory once the patch is public.
+#
+# We do not run a paid bug bounty. logflow-sim is volunteer-maintained
+# under MIT; recognition is via the advisory + changelog.
+
+Contact: https://github.com/gweber/logflow-sim/security/advisories/new
+Contact: mailto:security@netverdict.io
+Expires: 2027-05-16T00:00:00.000Z
+Encryption: https://netverdict.io/.well-known/pgp-key.asc
+Preferred-Languages: en, de
+Canonical: https://netverdict.io/logflow/.well-known/security.txt
+Policy: https://github.com/gweber/logflow-sim/blob/main/SECURITY.md
+Acknowledgments: https://github.com/gweber/logflow-sim/security/advisories

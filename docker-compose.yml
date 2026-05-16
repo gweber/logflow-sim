@@ -1,0 +1,17 @@
+services:
+  logflow-sim:
+    build: .
+    image: logflow-sim:latest
+    container_name: logflow-sim
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount the dialect-appropriate config directory here. Use ./conf-demo
+      # for the bundled demo, or your own folder of rsyslog configs.
+      - "./conf:/app/conf:ro"
+      - "./content:/app/content:ro"
+    environment:
+      - PORT=3000
+      - RSYSLOG_CONF_ENTRYPOINT=conf/rsyslog.conf
+      - CONTENT_DIR=content
+    restart: unless-stopped

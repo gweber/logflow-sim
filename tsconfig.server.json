@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "outDir": "dist",
+    "rootDir": "src",
+    "noEmit": false,
+    "declaration": false,
+    "sourceMap": true,
+    "jsx": "preserve"
+  },
+  "include": ["src/server.ts", "src/cli/**/*", "src/mcp/**/*", "src/core/**/*", "src/vfs/**/*", "src/config/**/*", "src/lookups/**/*", "src/content/**/*", "src/api/**/*"],
+  "exclude": ["src/ui/**/*"]
+}
