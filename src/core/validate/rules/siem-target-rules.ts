@@ -19,6 +19,7 @@ import {
   LOKI_RECOMMENDED_LABEL_FIELDS,
   LOKI_HIGH_CARDINALITY_FIELDS
 } from '../../siem-targets/loki/mappings.js';
+import { SENTINEL_CUSTOM_TABLE_REGEX } from '../../siem-targets/microsoft-sentinel/mappings.js';
 
 const NO_SRC = { file: '<validator>', line: 0, col: 0, offset: 0, length: 0 };
 
@@ -269,6 +270,91 @@ export const gelfCustomFieldPrefixRule: ValidationRule = {
 };
 
 // ---------------------------------------------------------------------------
+// Microsoft Sentinel
+// ---------------------------------------------------------------------------
+
+export const sentinelInvalidTableNameRule: ValidationRule = {
+  id: 'microsoft-sentinel/invalid-table-name',
+  description:
+    'A Sentinel DCR stream targets a table that must match `[A-Z][A-Za-z0-9]{1,44}_CL`.',
+  defaultSeverity: 'error',
+  siemTargets: ['microsoft-sentinel'],
+  run(model): Diagnostic[] {
+    const findings: Diagnostic[] = [];
+    for (const o of outputsFor(model, 'microsoft-sentinel')) {
+      const candidates: unknown[] = [
+        o.params['table'],
+        o.params['Table'],
+        o.params['stream'],
+        o.params['Stream'],
+        o.params['table_name']
+      ];
+      for (const c of candidates) {
+        if (typeof c !== 'string' || c.length === 0) continue;
+        if (!SENTINEL_CUSTOM_TABLE_REGEX.test(c) && !KNOWN_SENTINEL_STANDARD_TABLES.has(c)) {
+          findings.push({
+            severity: 'error',
+            code: 'SIEM_SENTINEL_INVALID_TABLE_NAME',
+            message:
+              `Sentinel custom-log table name "${c}" on output "${o.name}" is ` +
+              `invalid — must be a standard table (Syslog, SecurityEvent, …) ` +
+              `or a custom table matching [A-Za-z][A-Za-z0-9]{1,44}_CL.`,
+            source: o.source
+          });
+        }
+      }
+    }
+    return findings;
+  }
+};
+
+const KNOWN_SENTINEL_STANDARD_TABLES = new Set([
+  'Syslog',
+  'SecurityEvent',
+  'CommonSecurityLog',
+  'AzureActivity',
+  'SigninLogs',
+  'AuditLogs'
+]);
+
+// ---------------------------------------------------------------------------
+// Sumo Logic
+// ---------------------------------------------------------------------------
+
+export const sumoMissingSourceCategoryRule: ValidationRule = {
+  id: 'sumo-logic/missing-source-category',
+  description:
+    'Sumo Logic outputs should set _sourceCategory — it drives search, ' +
+    'dashboards, and pipeline routing across the entire account.',
+  defaultSeverity: 'warning',
+  siemTargets: ['sumo-logic'],
+  run(model): Diagnostic[] {
+    const findings: Diagnostic[] = [];
+    const upstream =
+      structuredFieldIsSet(model, '_sourceCategory') ||
+      structuredFieldIsSet(model, 'sourceCategory');
+    for (const o of outputsFor(model, 'sumo-logic')) {
+      const hasParam =
+        '_sourceCategory' in o.params ||
+        'sourceCategory' in o.params ||
+        'category' in o.params;
+      if (!hasParam && !upstream) {
+        findings.push({
+          severity: 'warning',
+          code: 'SIEM_SUMO_MISSING_SOURCE_CATEGORY',
+          message:
+            `Sumo Logic output "${o.name}" has no _sourceCategory. ` +
+            `Without it, events land in an unindexed default category and ` +
+            `Sumo Field Extraction Rules can't fire.`,
+          source: o.source
+        });
+      }
+    }
+    return findings;
+  }
+};
+
+// ---------------------------------------------------------------------------
 
 export const SIEM_TARGET_RULES: ValidationRule[] = [
   splunkMissingSourcetypeRule,
@@ -276,7 +362,9 @@ export const SIEM_TARGET_RULES: ValidationRule[] = [
   datadogMissingServiceRule,
   lokiHighCardinalityLabelRule,
   lokiNoLabelsRule,
-  gelfCustomFieldPrefixRule
+  gelfCustomFieldPrefixRule,
+  sentinelInvalidTableNameRule,
+  sumoMissingSourceCategoryRule
 ];
 
 // ---------------------------------------------------------------------------

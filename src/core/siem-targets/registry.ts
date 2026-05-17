@@ -15,6 +15,8 @@ import { elasticEcsTarget } from './elastic-ecs/index.js';
 import { datadogTarget } from './datadog/index.js';
 import { lokiTarget } from './loki/index.js';
 import { graylogGelfTarget } from './graylog-gelf/index.js';
+import { microsoftSentinelTarget } from './microsoft-sentinel/index.js';
+import { sumoLogicTarget } from './sumo-logic/index.js';
 
 /**
  * The registry. Order is intentional — `generic` first so it shows up
@@ -26,7 +28,9 @@ const SIEM_TARGETS: Record<string, SIEMTarget> = {
   [elasticEcsTarget.id]: withComputedInverse(elasticEcsTarget),
   [datadogTarget.id]: withComputedInverse(datadogTarget),
   [lokiTarget.id]: withComputedInverse(lokiTarget),
-  [graylogGelfTarget.id]: withComputedInverse(graylogGelfTarget)
+  [graylogGelfTarget.id]: withComputedInverse(graylogGelfTarget),
+  [microsoftSentinelTarget.id]: withComputedInverse(microsoftSentinelTarget),
+  [sumoLogicTarget.id]: withComputedInverse(sumoLogicTarget)
 };
 
 /**

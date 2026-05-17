@@ -5,16 +5,16 @@ import { renderGELF } from '../../src/core/siem-targets/renderers/gelf.js';
 import { OCSF_CATEGORIES, OCSF_CLASSES } from '../../src/core/siem-targets/ocsf.js';
 
 describe('Week 2: registry size', () => {
-  it('lists 6 SIEM targets (generic + splunk + elastic-ecs + datadog + loki + graylog-gelf)', () => {
-    const ids = listSIEMTargets().map((t) => t.id).sort();
-    expect(ids).toEqual([
-      'datadog',
+  it('Week 2 added at least 6 SIEM targets to the registry', () => {
+    const ids = listSIEMTargets().map((t) => t.id);
+    expect(ids).toEqual(expect.arrayContaining([
+      'generic',
+      'splunk',
       'elastic-ecs',
-      'generic', // generic first in registry order but sorted here
-      'graylog-gelf',
+      'datadog',
       'loki',
-      'splunk'
-    ]);
+      'graylog-gelf'
+    ]));
   });
 });
 
