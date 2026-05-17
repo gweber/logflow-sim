@@ -95,6 +95,15 @@ logflow-sim diff    ./rsyslog --overlay-dir=./rsyslog-pr \
 
 # Migrate the whole config tree to another dialect
 logflow-sim convert ./rsyslog --target=otel --out-dir=./otel-out
+
+# Migrate dialect + retag SIEM destination vocabulary in one shot
+logflow-sim convert ./rsyslog --target=vector \
+                              --source-siem=splunk --target-siem=elastic-ecs \
+                              --out-dir=./vector-out
+
+# Retag destination vocabulary only (keep the source dialect intact)
+logflow-sim retag   ./rsyslog --source-siem=splunk --target-siem=datadog \
+                              --out-dir=./splunk-to-dd
 ```
 
 Exit codes: `0` success · `1` diagnostics or routing threshold breached ·

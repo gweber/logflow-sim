@@ -12,14 +12,26 @@ tool stays useful — pick one of the levers below.
 2. **Add a dialect.** 10 are wired today (rsyslog, syslog-ng, Fluent Bit,
    NXLog, Logstash, Vector, OTel Collector, Filebeat, Promtail, Fluentd).
    Graylog-pipelines, Cribl, custom in-house DSLs are all candidates.
-3. **Add a validation rule** for a dialect that's under-served. Each rule
-   is ~50 LOC; see the "How to add a validation rule" section below.
-4. **Polish a translation.** All 13 locales (en, de, fr, es, pt, it, ja,
+3. **Add a SIEM destination.** 11 ship in v0.2.0 (generic + Splunk,
+   Elastic ECS, Datadog, Loki, Graylog GELF, Sentinel, Sumo Logic,
+   Chronicle UDM, QRadar LEEF, ArcSight CEF). New ones plug in via the
+   plugin contract in `src/core/siem-targets/types.ts`. Recipe:
+   - Create `src/core/siem-targets/<id>/{index,mappings}.ts`
+   - Declare a `FieldMap` (OCSF → native paths) + at least one `ValueMap`
+     (native value → OCSF class, see `OCSF_CLASSES` in `ocsf.ts`)
+   - Register in `src/core/siem-targets/registry.ts`
+   - Optional: per-target validation rules in
+     `src/core/validate/rules/siem-target-rules.ts`
+   - Document provenance in `vendor/mappings/README.md`
+4. **Add a validation rule** for a dialect or SIEM target that's
+   under-served. Each rule is ~50 LOC; see the "How to add a validation
+   rule" section below.
+5. **Polish a translation.** All 13 locales (en, de, fr, es, pt, it, ja,
    zh, ko, ru, hi, tr, vi) ship full UI translations today. If something
    reads awkwardly in your locale, the catalogs live under
    `src/ui/i18n/locales/` and a one-file PR is the smallest meaningful
    contribution to the project.
-5. **Extend test coverage.** Especially the corpus regression suite under
+6. **Extend test coverage.** Especially the corpus regression suite under
    `test/corpus/` — fetch real-world distro defaults and pin their parse
    summaries as baselines.
 

@@ -160,12 +160,16 @@ The `logflow-sim` CLI is the engine behind the Action and works equally well
 as a local pre-commit hook or in any CI runner.
 
 ```
-logflow-sim parse    <conf-dir>                                # parse + validator (silent drops, dead code, undef refs)
-logflow-sim test     <conf-dir>                                # parse + run conf/tests/*.json
-logflow-sim simulate <conf-dir> --input=msg.json               # one message, JSON trace
-logflow-sim replay   <conf-dir> --lines=corpus.log             # batch, aggregate verdict
-logflow-sim replay   <conf-dir> --pcap=capture.pcap            # accepts pcap classic and pcapng
-logflow-sim convert  <conf-dir> --target=otel --out-dir=./out  # whole-tree migration + lookup sidecars
+logflow-sim parse    <conf-dir>                                  # parse + validator (silent drops, dead code, undef refs)
+logflow-sim test     <conf-dir>                                  # parse + run conf/tests/*.json
+logflow-sim simulate <conf-dir> --input=msg.json                 # one message, JSON trace
+logflow-sim replay   <conf-dir> --lines=corpus.log               # batch, aggregate verdict
+logflow-sim replay   <conf-dir> --pcap=capture.pcap              # accepts pcap classic and pcapng
+logflow-sim convert  <conf-dir> --target=otel --out-dir=./out    # whole-tree migration + lookup sidecars
+                                [--source-siem=splunk]           # also retag destination vocabulary
+                                [--target-siem=elastic-ecs]
+logflow-sim retag    <conf-dir> --target-siem=elastic-ecs        # destination retag only (keep pipeline dialect)
+                                --out-dir=./out [--source-siem=…]
 logflow-sim diff     <conf-dir> --overlay-dir=pr-conf/         \
                                 --lines=corpus.log             \
                                 --max-route-change-pct=5       # exit 1 if PCT exceeded
@@ -269,7 +273,8 @@ and can be renamed, exported back to ZIP, or deleted at any time.
 Ships with a [Model Context Protocol](https://modelcontextprotocol.io)
 server (`logflow-sim-mcp`) that exposes the kernel as tools an LLM can
 call: `logflow_parse`, `logflow_simulate`, `logflow_replay`,
-`logflow_diff`, `logflow_convert`, `logflow_detect`, `logflow_validate`.
+`logflow_diff`, `logflow_convert`, `logflow_retag`, `logflow_detect`,
+`logflow_validate`.
 Stdio JSON-RPC 2.0 transport — register with Claude Desktop or any
 MCP-aware client. Details in [`content/docs/mcp.md`](content/docs/mcp.md).
 

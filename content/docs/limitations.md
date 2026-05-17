@@ -81,3 +81,28 @@ no `else` is correctly flagged; `if x == "a" then ... else if x == "b" then ...
 else action()` is correctly NOT flagged; but a pattern like `if x =~ ".*foo.*"`
 followed by `if x == "foobar"` — second statement is unreachable — is NOT
 caught today).
+
+## SIEM-destination retag
+
+- **No live SIEM connectivity / credential handling.** Outputs requiring
+  tokens emit placeholders (`${SPLUNK_HEC_TOKEN}`, `${DD_API_KEY}`, …) plus
+  a diagnostic. You wire the real credential in your deployment.
+- **OCSF coverage is a pivot, not a full schema.** We model ~20 OCSF
+  classes covering the routing-relevant taxonomies; full OCSF v1.5.0
+  has hundreds more. Anything that doesn't classify cleanly flows
+  through with `SIEM_VALUE_LOSSY` info diagnostics and the original
+  value preserved verbatim.
+- **Field-map coverage is the most-used ~30 fields per target.**
+  Elastic ECS has hundreds; we cover host, source, destination, event,
+  log.syslog, service. The rest flow via `unmapped` passthrough.
+- **LEEF / CEF rendering** covers the spec but not vendor-specific
+  extensions (CEF custom fields beyond cs1..cs6, LEEF v1.0 back-compat).
+- **Sentinel DCR authentication flow is documented but not modelled.**
+  We emit the table-shape correctly; you wire AAD in your environment.
+- **Chronicle UDM coverage is structural.** Mapped fields route into
+  metadata/principal/target/network groups; everything else flows
+  through `additional.fields[]`.
+- **Detection-side never gets retagged.** Sigma rules continue to
+  reference the source vocabulary unless the user explicitly rewrites
+  them — retag only translates the *config* that produces events, not
+  the rules that consume them.
