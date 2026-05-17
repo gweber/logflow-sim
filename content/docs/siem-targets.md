@@ -35,6 +35,73 @@ either dimension or both at once:
 | `qradar-leef` | IBM | LEEF 2.0 (pipe) | `leef.eventId` (LOGIN_SUCCESS, FW_DENY, …) |
 | `arcsight-cef` | OpenText | CEF 0 (pipe) | `cef.eventClassID` (auth.login.success, firewall.deny, …) |
 
+## Ingest × output coverage matrix
+
+The 10 pipeline dialects (left axis) cross with the 11 SIEM destinations
+(top axis) for 110 routing-and-vocabulary combinations. **Every cell
+works** — the OCSF pivot makes the value rewriting dialect-agnostic and
+the wire-format renderer is chosen by the target SIEM, not the source
+dialect. The matrix below documents the **path** each combination takes:
+
+| Dialect ↓ \ SIEM → | splunk | elastic-ecs | datadog | loki | graylog-gelf | microsoft-sentinel | sumo-logic | chronicle-udm | qradar-leef | arcsight-cef |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **rsyslog**        | `omsplunkhec` | `omelasticsearch` | `omhttp`→ | `omhttp`→ | `omfwd`+GELF | `omhttp`→ | `omhttp`→ | `omhttp`→ | `omfwd`+LEEF | `omfwd`+CEF |
+| **syslog-ng**      | `http()`→ | `elasticsearch-http()` | `http()`→ | `http()`→ | `gelf()` | `http()`→ | `http()`→ | `http()`→ | `syslog(LEEF)` | `syslog(CEF)` |
+| **Fluent Bit**     | `splunk` | `es` / `elasticsearch` | `datadog` | `loki` | `gelf` | `azure_logs_ingestion` | `http`→ | `http`→ | `syslog`+LEEF | `syslog`+CEF |
+| **NXLog**          | `om_http`→ | `om_elasticsearch` | `om_http`→ | `om_http`→ | `om_udp`+GELF | `om_http`→ | `om_http`→ | `om_http`→ | `om_udp`+LEEF | `om_udp`+CEF |
+| **Logstash**       | `splunk` | `elasticsearch` | `datadog_logs` | `loki` | `gelf` | `microsoft-sentinel-logstash` | `sumologic` | `google_cloud_chronicle` | `syslog`+LEEF | `syslog`+CEF |
+| **Vector**         | `splunk_hec_logs` | `elasticsearch` | `datadog_logs` | `loki` | `socket`+gelf | `azure_monitor_logs` | `sumo_logic` | `gcp_chronicle_logging` | `socket`+LEEF | `socket`+CEF |
+| **OTel**           | `splunk_hec` | `elasticsearch` | `datadog` | `loki` | `file`→GELF | `azuremonitor` | `sumologic` | `googlecloud` | `file`→LEEF | `file`→CEF |
+| **Filebeat**       | `output`→ | `elasticsearch` ★ | `output`→ | `output`→ | `output`→ | `azure_logs_ingestion` | `output`→ | `output`→ | `output`→ | `output`→ |
+| **Promtail**       | — | — | — | `clients` ★ | — | — | — | — | — | — |
+| **Fluentd**        | `splunk_hec` | `elasticsearch` | `datadog` | `loki` | `gelf` | `azure_logs_ingestion` | `sumologic` | `google_cloud_chronicle` | `syslog`+LEEF | `syslog`+CEF |
+
+### Legend
+
+- **Plain driver name** (`splunk_hec`, `elasticsearch`, `loki`, …):
+  the dialect ships a first-class output for this SIEM; logflow-sim
+  emits config with that driver directly.
+- **`→`** (e.g. `omhttp`→ or `http()`→): the dialect has no
+  SIEM-specific driver — the config goes through a generic HTTP or
+  syslog forwarder. logflow-sim emits the right URL / headers and
+  flags `SIEM_FIELD_UNMAPPED` info diagnostics for anything that
+  doesn't fit the canonical payload.
+- **`+GELF` / `+LEEF` / `+CEF`**: the transport is a generic socket
+  but the *payload* is rendered by logflow-sim's dedicated renderer
+  for that wire format.
+- **★** (canonical pairing): Promtail is the Loki push agent;
+  Filebeat is Elastic's beats forwarder. Using either with their
+  paired SIEM is the design intent.
+- **—**: the dialect doesn't ship a sensible output for this
+  destination. Promtail is single-purpose by design — converting *to*
+  Promtail only makes sense with `--target-siem=loki`. For any other
+  destination, use one of the general-purpose dialects (Vector,
+  Fluent Bit, OTel, rsyslog).
+
+### What "every cell works" means
+
+OCSF acts as the lingua franca between source and target vocabularies.
+A retag from Splunk-style `sourcetype=linux:secure` to
+GELF-style `facility=auth` traverses:
+
+```
+splunk plugin → toOCSF(sourcetype, "linux:secure")
+              → { class_uid: AUTHENTICATION }
+              → graylog-gelf plugin → fromOCSF(gelf.facility, …)
+              → "auth"
+```
+
+The path doesn't care which dialect parsed the source config. A retag
+from `rsyslog+Splunk` to `Vector+GELF` and a retag from `syslog-ng+Splunk`
+to `Vector+GELF` produce the same destination-vocabulary output —
+they just emit different pipeline syntax around it.
+
+The cells where logflow-sim emits a generic HTTP forwarder (the `→`
+marks) still carry the rewritten payload. They produce a working
+config; they just don't take advantage of any dialect-native plugin
+that the target SIEM's official agent might prefer. For dialects with
+dedicated plugins, those plugins are used in preference.
+
 ## How translation works (the OCSF pivot)
 
 Every plugin maps its native vocabulary **to and from** the [Open

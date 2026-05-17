@@ -120,6 +120,36 @@ SIEM is O(1) in mapping effort. Lossy translations surface as
 
 Full reference: [`content/docs/siem-targets.md`](content/docs/siem-targets.md).
 
+### Dialect × SIEM coverage matrix
+
+Every combination is supported: the OCSF pivot makes the value rewriting
+dialect-agnostic and the renderer is chosen by the target SIEM, not the
+source dialect. The matrix below shows the **native output driver** each
+dialect uses to drive each destination — for cells marked `→`, the dialect
+emits via a generic HTTP / syslog forwarder rather than a dialect-specific
+plugin.
+
+| Dialect ↓ \ SIEM → | Splunk | Elastic | Datadog | Loki | Graylog | Sentinel | Sumo | Chronicle | QRadar | ArcSight |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **rsyslog**        | `omsplunkhec` | `omelasticsearch` | `omhttp`→        | `omhttp`→        | `omfwd`+GELF      | `omhttp`→        | `omhttp`→ | `omhttp`→ | `omfwd`+LEEF | `omfwd`+CEF |
+| **syslog-ng**      | `http()`→     | `elasticsearch-http()` | `http()`→   | `http()`→        | `gelf()`          | `http()`→        | `http()`→ | `http()`→ | `syslog(LEEF)` | `syslog(CEF)` |
+| **Fluent Bit**     | `splunk`      | `es` / `elasticsearch` | `datadog`   | `loki`           | `gelf`            | `azure_logs_ingestion` | `http`→ | `http`→ | `syslog`+LEEF | `syslog`+CEF |
+| **NXLog**          | `om_http`→    | `om_elasticsearch` | `om_http`→     | `om_http`→       | `om_udp`+GELF     | `om_http`→       | `om_http`→ | `om_http`→ | `om_udp`+LEEF | `om_udp`+CEF |
+| **Logstash**       | `splunk`      | `elasticsearch`   | `datadog_logs`  | `loki`           | `gelf`            | `microsoft-sentinel-logstash` | `sumologic` | `google_cloud_chronicle` | `syslog`+LEEF | `syslog`+CEF |
+| **Vector**         | `splunk_hec_logs` | `elasticsearch` | `datadog_logs` | `loki`         | `socket`+gelf     | `azure_monitor_logs` | `sumo_logic` | `gcp_chronicle_logging` | `socket`+LEEF | `socket`+CEF |
+| **OTel**           | `splunk_hec`  | `elasticsearch`   | `datadog`       | `loki`           | `file`→GELF      | `azuremonitor`   | `sumologic` | `googlecloud`         | `file`→LEEF | `file`→CEF |
+| **Filebeat**       | `output`→     | `elasticsearch` ★ | `output`→       | `output`→        | `output`→        | `azure_logs_ingestion` | `output`→ | `output`→ | `output`→ | `output`→ |
+| **Promtail**       | —             | —                 | —               | `clients` ★      | —                 | —                | — | — | — | — |
+| **Fluentd**        | `splunk_hec`  | `elasticsearch`   | `datadog`       | `loki`           | `gelf`            | `azure_logs_ingestion` | `sumologic` | `google_cloud_chronicle` | `syslog`+LEEF | `syslog`+CEF |
+
+★ = canonical pairing (Promtail is the Loki agent; Filebeat is Elastic's
+beats forwarder).
+`→` = via generic HTTP / syslog forwarder, no dialect-native plugin.
+`+GELF`/`+LEEF`/`+CEF` = the wire payload is rendered by logflow-sim's
+dedicated renderer; the dialect only handles the transport.
+`—` = the dialect doesn't ship a sensible output for this destination
+(Promtail is single-purpose by design).
+
 ```bash
 # Standalone retag (keep the pipeline syntax)
 logflow-sim retag ./rsyslog \
