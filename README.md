@@ -92,6 +92,46 @@ Each dialect lives under `src/core/dialects/<id>/` and implements the `Dialect` 
 in [`src/core/dialects/types.ts`](src/core/dialects/types.ts). The simulator and UI consume
 the normalized IR — they are dialect-agnostic.
 
+## Supported SIEM destinations
+
+logflow-sim knows the destination-side vocabulary of 10 major SIEM platforms
+plus a passthrough `generic` target. Migration translates both the pipeline
+syntax (dialect axis) and the destination's preferred field/value vocabulary
+(SIEM axis) — or either one independently via `logflow-sim retag`.
+
+| Target | Vendor | Wire format | Primary taxonomy |
+|---|---|---|---|
+| `generic` | — | passthrough | (none) |
+| `splunk` | Splunk | JSON (HEC) | sourcetype |
+| `elastic-ecs` | Elastic | JSON (ECS) | event.category / event.type |
+| `datadog` | Datadog | JSON (Intake API) | ddsource |
+| `loki` | Grafana Labs | JSON (Push API) | low-cardinality labels |
+| `graylog-gelf` | Graylog | GELF 1.1 | facility |
+| `microsoft-sentinel` | Microsoft | JSON (DCR) | custom log table (*_CL) |
+| `sumo-logic` | Sumo Logic | JSON (HTTP) | _sourceCategory |
+| `chronicle-udm` | Google | UDM JSON | metadata.event_type |
+| `qradar-leef` | IBM | LEEF 2.0 (pipe) | LEEF EventID |
+| `arcsight-cef` | OpenText | CEF 0 (pipe) | CEF EventClassID |
+
+Translations route through the [OCSF](https://schema.ocsf.io) pivot — every
+plugin maps to/from OCSF, never directly to other plugins, so adding a new
+SIEM is O(1) in mapping effort. Lossy translations surface as
+`SIEM_VALUE_LOSSY` diagnostics; original values are preserved verbatim.
+
+Full reference: [`content/docs/siem-targets.md`](content/docs/siem-targets.md).
+
+```bash
+# Standalone retag (keep the pipeline syntax)
+logflow-sim retag ./rsyslog \
+  --source-siem=splunk --target-siem=elastic-ecs \
+  --out-dir=./ecs/
+
+# Pipeline + SIEM in one shot
+logflow-sim convert ./rsyslog \
+  --target=vector --source-siem=splunk --target-siem=datadog \
+  --out-dir=./vector-dd/
+```
+
 ## Migrate between dialects
 
 Take your live rsyslog config and produce a working OpenTelemetry Collector

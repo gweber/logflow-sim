@@ -1,8 +1,8 @@
 {
   "name": "logflow-sim",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Explainable log-pipeline simulator. Parses your routing configuration (rsyslog today; syslog-ng, NXLog, Fluent Bit, Vector planned) and shows exactly where every log goes.",
+  "description": "Explainable log-pipeline simulator. Parses routing configurations across 10 dialects and retags destination-side vocabulary across 11 SIEM targets via an OCSF pivot — shows exactly where every log goes and translates between vendor conventions.",
   "type": "module",
   "license": "MIT",
   "repository": {

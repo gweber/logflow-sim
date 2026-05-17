@@ -26,7 +26,7 @@ play with the bundled multi-vendor demo.
 | **Replay** | Drop a batch of real syslog (text or pcap) and see the aggregate verdict — per-ruleset, per-output, top programs, drill-down samples |
 | **Diff** | Replay through both your live config and an overlaid variant, see routing deltas before you merge |
 | **Detection** | Run Sigma detection rules against a replay corpus; optionally diff against an overlay to see whether a routing change cuts SOC visibility |
-| **Migrate** | Convert your config to another dialect (rsyslog → OTel, Vector → syslog-ng, etc.) with all lookup tables in the target's native form |
+| **Migrate** | Convert your config to another dialect (rsyslog → OTel, Vector → syslog-ng, etc.) with all lookup tables in the target's native form. Optionally retag destination-side vocabulary at the same time — Splunk sourcetypes → ECS event.category, Datadog ddsource → Loki label, etc. (See [SIEM targets](/docs/siem-targets).) |
 | **Projects** | Clone the live server config or upload your own (folder, files, or ZIP — drag-and-drop supported) into a browser-local project; switches the UI into local mode where parsing and simulation run in a Web Worker without anything leaving the browser |
 | **Config** | Browse the parsed tree; switch the dialect picker to get an on-the-fly converted preview of every file |
 | **Tests** | Run `conf/tests/*.json` expectation files |

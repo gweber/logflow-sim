@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "nomatch": "process",
+  "type": "string",
+  "table": [
+    { "index": "sshd",       "value": "authentication" },
+    { "index": "sudo",       "value": "authentication" },
+    { "index": "su",         "value": "authentication" },
+    { "index": "cron",       "value": "process" },
+    { "index": "kernel",     "value": "driver" },
+    { "index": "systemd",    "value": "process" },
+    { "index": "nginx",      "value": "web" },
+    { "index": "apache",     "value": "web" },
+    { "index": "haproxy",    "value": "web" },
+    { "index": "postfix",    "value": "email" },
+    { "index": "sendmail",   "value": "email" },
+    { "index": "named",      "value": "network" },
+    { "index": "dnsmasq",    "value": "network" },
+    { "index": "dhcpd",      "value": "network" }
+  ]
+}

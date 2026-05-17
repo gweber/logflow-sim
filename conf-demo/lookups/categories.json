@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "nomatch": "uncategorized",
+  "type": "string",
+  "table": [
+    { "index": "sshd",       "value": "auth" },
+    { "index": "sudo",       "value": "auth" },
+    { "index": "su",         "value": "auth" },
+    { "index": "cron",       "value": "scheduled" },
+    { "index": "kernel",     "value": "system" },
+    { "index": "systemd",    "value": "system" },
+    { "index": "nginx",      "value": "web" },
+    { "index": "apache",     "value": "web" },
+    { "index": "haproxy",    "value": "web" },
+    { "index": "postfix",    "value": "mail" },
+    { "index": "sendmail",   "value": "mail" },
+    { "index": "named",      "value": "dns" },
+    { "index": "dnsmasq",    "value": "dns" },
+    { "index": "dhcpd",      "value": "dhcp" }
+  ]
+}
