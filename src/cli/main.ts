@@ -74,6 +74,10 @@ interface CliFlags {
   outDir?: string;
   /** For convert: overwrite outDir even if non-empty. */
   force?: boolean;
+  /** For convert/retag: source SIEM destination ID (defaults to auto-detect). */
+  sourceSiem?: string;
+  /** For convert/retag: target SIEM destination ID. */
+  targetSiem?: string;
   quiet: boolean;
 }
 
@@ -139,6 +143,10 @@ function parseFlags(argv: string[]): { positional: string[]; flags: CliFlags } {
     else if (a === '--out-dir' || a === '-o') flags.outDir = argv[++i];
     else if (a.startsWith('--out-dir=')) flags.outDir = a.slice(10);
     else if (a === '--force') flags.force = true;
+    else if (a === '--source-siem') flags.sourceSiem = argv[++i];
+    else if (a.startsWith('--source-siem=')) flags.sourceSiem = a.slice(14);
+    else if (a === '--target-siem') flags.targetSiem = argv[++i];
+    else if (a.startsWith('--target-siem=')) flags.targetSiem = a.slice(14);
     else if (a === '--quiet' || a === '-q') flags.quiet = true;
     else if (a === '--help' || a === '-h') {
       printHelp();
@@ -161,6 +169,9 @@ Usage:
   logflow-sim simulate <conf-dir> --input=msg.json [--format=…]
   logflow-sim replay   <conf-dir> (--lines=FILE | --pcap=FILE) [--max-messages=N] [--format=…]
   logflow-sim convert  <conf-dir> --target=DIALECT --out-dir=PATH [--force]
+                                  [--source-siem=ID] [--target-siem=ID]
+  logflow-sim retag    <conf-dir> --target-siem=ID --out-dir=PATH [--force]
+                                  [--source-siem=ID]
   logflow-sim detection-impact <conf-dir> --sigma=RULE.yml [--sigma=...]
                                           (--lines=FILE | --pcap=FILE) [--format=...]
   logflow-sim detection-diff   <conf-dir> --sigma=RULE.yml [--sigma=...]
@@ -880,7 +891,11 @@ async function cmdConvert(confDir: string, flags: CliFlags): Promise<number> {
     return 1;
   }
 
-  const result = runConvert(ctx.model, flags.target, { lookupTables: ctx.lookupTables });
+  const result = runConvert(ctx.model, flags.target, {
+    lookupTables: ctx.lookupTables,
+    sourceSiem: flags.sourceSiem,
+    targetSiem: flags.targetSiem
+  });
 
   // Write every emitted file. Paths are interpreted relative to outAbs and
   // path-traversal is rejected — an emitter shouldn't be writing outside
@@ -902,6 +917,8 @@ async function cmdConvert(confDir: string, flags: CliFlags): Promise<number> {
         {
           sourceDialect: ctx.model.dialect,
           targetDialect: result.targetDialect,
+          sourceSiem: result.sourceSiem,
+          targetSiem: result.targetSiem,
           outDir: outAbs,
           files: written,
           diagnostics: result.diagnostics
@@ -911,8 +928,11 @@ async function cmdConvert(confDir: string, flags: CliFlags): Promise<number> {
       ) + '\n'
     );
   } else {
+    const siemNote = result.targetSiem
+      ? ` [SIEM ${result.sourceSiem ?? 'unknown'} → ${result.targetSiem}]`
+      : '';
     process.stdout.write(
-      `Converted ${confDir} (${ctx.model.dialect ?? 'auto'}) → ${result.targetDialect} into ${outAbs}\n`
+      `Converted ${confDir} (${ctx.model.dialect ?? 'auto'}) → ${result.targetDialect}${siemNote} into ${outAbs}\n`
     );
     for (const w of written) process.stdout.write(`  ${w}\n`);
     if (result.diagnostics.length > 0) {
@@ -923,6 +943,24 @@ async function cmdConvert(confDir: string, flags: CliFlags): Promise<number> {
     }
   }
   return 0;
+}
+
+/**
+ * `retag` — same as `convert` but keeps the source dialect, only rewrites
+ * destination-side vocabulary. Useful when the user wants to translate
+ * Splunk sourcetypes into ECS event.category without changing pipeline
+ * syntax.
+ */
+async function cmdRetag(confDir: string, flags: CliFlags): Promise<number> {
+  if (!flags.targetSiem) die(`retag requires --target-siem=ID`, 3);
+  if (!flags.outDir) die(`retag requires --out-dir=PATH`, 3);
+  const ctx = await getModel(confDir, flags.entrypoint);
+  if (shouldFail(flags, ctx.diagnostics)) {
+    emitDiagnostics(flags, ctx.diagnostics);
+    return 1;
+  }
+  // Reuse the convert pipeline with the source dialect as target.
+  return cmdConvert(confDir, { ...flags, target: ctx.model.dialect });
 }
 
 function safeHostname(): string {
@@ -956,6 +994,8 @@ async function main(): Promise<void> {
       process.exit(await cmdDiff(confDir, flags));
     case 'convert':
       process.exit(await cmdConvert(confDir, flags));
+    case 'retag':
+      process.exit(await cmdRetag(confDir, flags));
     case 'detection-impact':
       process.exit(await cmdDetectionImpact(confDir, flags));
     case 'detection-diff':

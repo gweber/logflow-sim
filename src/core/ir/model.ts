@@ -57,6 +57,13 @@ export interface IROutput extends IRBase {
   /** Best-effort classification mapped to our ActionKind enum. */
   actionKind: ActionKind;
   params: Record<string, IRValue>;
+  /**
+   * SIEM destination ID this output targets, when known. Auto-inferred at
+   * parse time from the driver — e.g. `splunk_hec` → `'splunk'`. Used by
+   * `retag` / `convert` to decide which value-maps to apply. Users can
+   * override via `# logflow: siem=<id>` comment above the output declaration.
+   */
+  siemTarget?: string;
 }
 
 /**
@@ -101,6 +108,19 @@ export interface IRLookupTable extends IRBase {
   file: string;
   reloadOnHUP?: boolean;
   params: Record<string, IRValue>;
+  /**
+   * Taxonomy this lookup's *values* belong to, when known. Auto-inferred at
+   * parse time from how the table is consumed (e.g. `set $!sourcetype =
+   * lookup("foo", ...)` tags table `foo` with taxonomy `'sourcetype'`).
+   * Users can override via `# logflow: taxonomy=<id>` comment above the
+   * lookup_table declaration. Drives value rewriting in `retag` / `convert`.
+   */
+  taxonomy?: string;
+  /**
+   * For multi-column lookups, which column carries the taxonomy value.
+   * Defaults to `'value'` for the standard rsyslog/syslog-ng shape.
+   */
+  taxonomyColumn?: string;
 }
 
 export interface IRModule extends IRBase {
