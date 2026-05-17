@@ -31,6 +31,14 @@ export interface ValidationRule {
    * "syslog-ng won't route messages from sources never named in a log{}".
    */
   dialects?: string[];
+  /**
+   * Optional SIEM-target filter. When set, the rule only runs against
+   * models that contain at least one output whose `siemTarget` matches
+   * one of these IDs (or whose driver maps to one of them). Use this for
+   * destination-side checks like "Splunk HEC output without sourcetype"
+   * or "Loki label cardinality looks unbounded".
+   */
+  siemTargets?: string[];
   /** Run the rule and produce diagnostics. */
   run(model: IRModel): Diagnostic[];
 }

@@ -12,6 +12,9 @@ import type { IRModel } from '../ir/model.js';
 import { genericTarget } from './generic/index.js';
 import { splunkTarget } from './splunk/index.js';
 import { elasticEcsTarget } from './elastic-ecs/index.js';
+import { datadogTarget } from './datadog/index.js';
+import { lokiTarget } from './loki/index.js';
+import { graylogGelfTarget } from './graylog-gelf/index.js';
 
 /**
  * The registry. Order is intentional — `generic` first so it shows up
@@ -20,7 +23,10 @@ import { elasticEcsTarget } from './elastic-ecs/index.js';
 const SIEM_TARGETS: Record<string, SIEMTarget> = {
   [genericTarget.id]: withComputedInverse(genericTarget),
   [splunkTarget.id]: withComputedInverse(splunkTarget),
-  [elasticEcsTarget.id]: withComputedInverse(elasticEcsTarget)
+  [elasticEcsTarget.id]: withComputedInverse(elasticEcsTarget),
+  [datadogTarget.id]: withComputedInverse(datadogTarget),
+  [lokiTarget.id]: withComputedInverse(lokiTarget),
+  [graylogGelfTarget.id]: withComputedInverse(graylogGelfTarget)
 };
 
 /**

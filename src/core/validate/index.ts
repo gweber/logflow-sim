@@ -33,6 +33,8 @@ import {
   logstashOutputWithoutInputRule,
   nxlogRouteTargetUndefinedRule
 } from './rules/dialect-starter-rules.js';
+// SIEM-target rules
+import { SIEM_TARGET_RULES } from './rules/siem-target-rules.js';
 
 /**
  * The default rule set. Add more rules here as they're built — every rule
@@ -64,7 +66,9 @@ const DEFAULT_RULES: ValidationRule[] = [
   // fluent-bit / logstash / nxlog (starter rules — PRs welcome to expand)
   fluentBitOutputWithoutMatchRule,
   logstashOutputWithoutInputRule,
-  nxlogRouteTargetUndefinedRule
+  nxlogRouteTargetUndefinedRule,
+  // SIEM destination rules (filter via `siemTargets` on each rule)
+  ...SIEM_TARGET_RULES
 ];
 
 export function validate(model: IRModel, opts: ValidateOptions = {}): ValidationReport {
@@ -78,6 +82,11 @@ export function validate(model: IRModel, opts: ValidateOptions = {}): Validation
     // without the field run against every model.
     if (rule.dialects && rule.dialects.length > 0) {
       if (!model.dialect || !rule.dialects.includes(model.dialect)) continue;
+    }
+    if (rule.siemTargets && rule.siemTargets.length > 0) {
+      const allowed = new Set(rule.siemTargets);
+      const hit = model.outputs.some((o) => o.siemTarget && allowed.has(o.siemTarget));
+      if (!hit) continue;
     }
     ran.push(rule.id);
     let raw: Diagnostic[];
