@@ -27,6 +27,15 @@ import { IconArrowRight, IconBolt, IconCopy } from '../components/Icons';
 
 interface DialectInfo { id: string; displayName: string; fileExtensions: string[] }
 interface DialectsResp { dialects: DialectInfo[] }
+interface SIEMTargetInfo {
+  id: string;
+  displayName: string;
+  vendor: string;
+  rendering: string;
+  outputDrivers: string[];
+  taxonomies: string[];
+}
+interface SIEMTargetsResp { targets: SIEMTargetInfo[] }
 interface ParseResp {
   dialect: string;
   summary: {
@@ -41,6 +50,8 @@ interface ParseResp {
 interface ConvertResp {
   sourceDialect: string;
   targetDialect: string;
+  sourceSiem?: string;
+  targetSiem?: string;
   output: string;
   diagnostics: { severity: string; message: string; code?: string }[];
 }
@@ -49,11 +60,20 @@ interface ConvertResp {
 // user lands on the meaningful ones without scrolling.
 const MIGRATION_FRIENDLY: string[] = ['otel', 'vector', 'syslog-ng', 'fluent-bit'];
 
+/**
+ * SIEM destinations the picker should surface first. Same ordering rule
+ * as MIGRATION_FRIENDLY — the most-asked-for retag targets bubble up.
+ */
+const SIEM_FRIENDLY: string[] = ['elastic-ecs', 'datadog', 'loki', 'graylog-gelf'];
+
 export function MigratePage() {
   const { t } = useT();
   const dialects = useApi<DialectsResp>('/dialects');
+  const siemTargets = useApi<SIEMTargetsResp>('/siem-targets');
   const parse = useApi<ParseResp>('/config/parse');
   const [target, setTarget] = useState<string>('');
+  const [targetSiem, setTargetSiem] = useState<string>('');
+  const [sourceSiem, setSourceSiem] = useState<string>('');
   const [result, setResult] = useState<ConvertResp | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -86,13 +106,32 @@ export function MigratePage() {
     });
   }, [dialects.data, sourceDialect]);
 
+  const siemTargetsList = useMemo(() => {
+    if (!siemTargets.data) return [];
+    const all = [...siemTargets.data.targets];
+    return all.sort((a, b) => {
+      const ai = SIEM_FRIENDLY.indexOf(a.id);
+      const bi = SIEM_FRIENDLY.indexOf(b.id);
+      if (a.id === 'generic') return -1;
+      if (b.id === 'generic') return 1;
+      if (ai !== -1 && bi !== -1) return ai - bi;
+      if (ai !== -1) return -1;
+      if (bi !== -1) return 1;
+      return a.displayName.localeCompare(b.displayName);
+    });
+  }, [siemTargets.data]);
+
   async function run(): Promise<void> {
     if (!target) return;
     setBusy(true);
     setError(null);
     setResult(null);
     try {
-      const r = await apiPost<ConvertResp>('/convert', { target });
+      const r = await apiPost<ConvertResp>('/convert', {
+        target,
+        sourceSiem: sourceSiem || undefined,
+        targetSiem: targetSiem || undefined
+      });
       setResult(r);
       requestAnimationFrame(() =>
         resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -170,6 +209,65 @@ export function MigratePage() {
           </p>
         </Card>
       </div>
+
+      {/*
+        Progressive-disclosure SIEM picker. Most users only want pipeline
+        translation; the SIEM retag axis stays collapsed by default so
+        they're not asked to make a second decision they don't need.
+      */}
+      <details class="mt-4">
+        <summary class="cursor-pointer text-sm text-accent hover:underline select-none">
+          Also retag SIEM destination →
+        </summary>
+        <Card class="mt-3">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label class="text-sm">
+              <div class="text-[11px] uppercase tracking-wider text-fg-subtle mb-1">
+                Source SIEM
+              </div>
+              <select
+                class="input font-mono text-sm"
+                value={sourceSiem}
+                onChange={(e) => setSourceSiem((e.target as HTMLSelectElement).value)}
+              >
+                <option value="">auto-detect</option>
+                {siemTargetsList.map((s) => (
+                  <option value={s.id}>
+                    {SIEM_FRIENDLY.includes(s.id) ? '★ ' : '  '}
+                    {s.displayName}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label class="text-sm">
+              <div class="text-[11px] uppercase tracking-wider text-fg-subtle mb-1">
+                Target SIEM
+              </div>
+              <select
+                class="input font-mono text-sm"
+                value={targetSiem}
+                onChange={(e) => setTargetSiem((e.target as HTMLSelectElement).value)}
+              >
+                <option value="">none (keep values as-is)</option>
+                {siemTargetsList.map((s) => (
+                  <option value={s.id}>
+                    {SIEM_FRIENDLY.includes(s.id) ? '★ ' : '  '}
+                    {s.displayName}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <p class="text-xs text-fg-muted mt-3">
+            When a target SIEM is set, lookup-table values whose taxonomy is
+            recognized by both source and target plugins (Splunk
+            sourcetype → ECS event.category, Datadog ddsource → Loki label,
+            etc.) are rewritten through an OCSF pivot before emission. Lossy
+            translations surface as <code class="font-mono text-[11px]">SIEM_VALUE_LOSSY</code> notes
+            in the result.
+          </p>
+        </Card>
+      </details>
 
       {error && (
         <div class="mt-4">
@@ -262,7 +360,17 @@ function ConvertResultPanel({ result }: { result: ConvertResp }) {
         <div class="flex items-center justify-between mb-3">
           <div>
             <div class="font-semibold">Generated {result.targetDialect} config</div>
-            <div class="text-xs text-fg-subtle font-mono">from {result.sourceDialect}</div>
+            <div class="text-xs text-fg-subtle font-mono">
+              from {result.sourceDialect}
+              {result.targetSiem && (
+                <>
+                  {' · SIEM '}
+                  <span class="text-accent">
+                    {result.sourceSiem ?? '?'} → {result.targetSiem}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
           <div class="flex items-center gap-2">
             <button class="btn-secondary text-xs" onClick={copy}>

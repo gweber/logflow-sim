@@ -178,11 +178,27 @@ export interface ConvertRequestDTO {
   target: string;
   /** Optional override of the source dialect (else server auto-detects). */
   dialect?: string;
+  /**
+   * Source SIEM destination ID — must match an entry from /api/siem-targets.
+   * Defaults to server-side auto-detection from output drivers when
+   * `targetSiem` is set and this is omitted.
+   */
+  sourceSiem?: string;
+  /**
+   * Target SIEM destination ID. When set, lookup-table values whose
+   * taxonomy is recognized by both source and target plugins are rewritten
+   * through the OCSF pivot before the dialect emitter sees them.
+   */
+  targetSiem?: string;
 }
 
 export interface ConvertResponseDTO {
   sourceDialect: string;
   targetDialect: string;
+  /** SIEM destination the kernel resolved (auto-detected or explicit). */
+  sourceSiem?: string;
+  /** SIEM destination the user requested. */
+  targetSiem?: string;
   /**
    * Convenience shortcut equal to `files[0].content` — handy when the
    * caller only needs the primary file (the common case for a quick
@@ -197,6 +213,21 @@ export interface ConvertResponseDTO {
    */
   files: { path: string; content: string }[];
   diagnostics: Diagnostic[];
+}
+
+// ===== SIEM targets =========================================================
+
+export interface SIEMTargetDTO {
+  id: string;
+  displayName: string;
+  vendor: string;
+  rendering: string;
+  outputDrivers: string[];
+  taxonomies: string[];
+}
+
+export interface SIEMTargetsListDTO {
+  targets: SIEMTargetDTO[];
 }
 
 // ===== Tests ================================================================

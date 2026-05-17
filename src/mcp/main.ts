@@ -191,19 +191,48 @@ const TOOLS: ToolDef[] = [
   {
     name: 'logflow_convert',
     description:
-      'Emit a parsed config in another dialect (rsyslog → otel, vector → syslog-ng, etc.) including lookup tables in the target dialect\'s native form. Use for migration planning.',
+      'Emit a parsed config in another dialect (rsyslog → otel, vector → syslog-ng, etc.) including lookup tables in the target dialect\'s native form. Optional sourceSiem/targetSiem trigger destination-side value rewriting through OCSF (e.g. Splunk sourcetype → ECS event.category).',
     inputSchema: {
       type: 'object',
       properties: {
         files: { type: 'array', items: { type: 'object' } },
         entrypoint: { type: 'string' },
-        target: { type: 'string', description: 'Target dialect ID.' }
+        target: { type: 'string', description: 'Target dialect ID.' },
+        sourceSiem: { type: 'string', description: 'Source SIEM destination ID (auto-detected when omitted).' },
+        targetSiem: { type: 'string', description: 'Target SIEM destination ID — triggers value rewriting.' }
       },
       required: ['files', 'target']
     },
     handler: async (args) => {
       const ctx = await modelFromArgs(args);
-      return runConvert(ctx.model, String(args.target), { lookupTables: ctx.lookupTables });
+      return runConvert(ctx.model, String(args.target), {
+        lookupTables: ctx.lookupTables,
+        sourceSiem: args.sourceSiem as string | undefined,
+        targetSiem: args.targetSiem as string | undefined
+      });
+    }
+  },
+  {
+    name: 'logflow_retag',
+    description:
+      'Translate destination-side vocabulary (Splunk sourcetypes → ECS event.category, GELF facility, Datadog ddsource, etc.) without changing the pipeline syntax. The OCSF pivot drives the translation; values that can\'t be mapped surface as info-level diagnostics.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        files: { type: 'array', items: { type: 'object' } },
+        entrypoint: { type: 'string' },
+        sourceSiem: { type: 'string', description: 'Source SIEM ID (auto-detected when omitted).' },
+        targetSiem: { type: 'string', description: 'Target SIEM ID — required.' }
+      },
+      required: ['files', 'targetSiem']
+    },
+    handler: async (args) => {
+      const ctx = await modelFromArgs(args);
+      return runConvert(ctx.model, ctx.model.dialect, {
+        lookupTables: ctx.lookupTables,
+        sourceSiem: args.sourceSiem as string | undefined,
+        targetSiem: args.targetSiem as string
+      });
     }
   },
   {

@@ -1,5 +1,5 @@
 import express from 'express';
-import { listDialects, convert } from '../../core/kernel.js';
+import { listDialects, listSIEMTargets, convert } from '../../core/kernel.js';
 import { BadRequestError } from '../../core/errors.js';
 import { getPipeline } from '../pipeline.js';
 import type { AppPaths } from '../context.js';
@@ -8,7 +8,8 @@ import { asyncHandler } from '../error-handler.js';
 import type {
   DialectsListDTO,
   ConvertRequestDTO,
-  ConvertResponseDTO
+  ConvertResponseDTO,
+  SIEMTargetsListDTO
 } from '../dto.js';
 
 export function dialectsRouter(paths: AppPaths): express.Router {
@@ -25,6 +26,20 @@ export function dialectsRouter(paths: AppPaths): express.Router {
     res.json(body);
   });
 
+  r.get('/siem-targets', (_req, res) => {
+    const body: SIEMTargetsListDTO = {
+      targets: listSIEMTargets().map((t) => ({
+        id: t.id,
+        displayName: t.displayName,
+        vendor: t.vendor,
+        rendering: t.rendering,
+        outputDrivers: t.outputDrivers,
+        taxonomies: Object.keys(t.valueMaps)
+      }))
+    };
+    res.json(body);
+  });
+
   r.post(
     '/convert',
     asyncHandler(async (req, res) => {
@@ -36,11 +51,15 @@ export function dialectsRouter(paths: AppPaths): express.Router {
         dialect: body.dialect
       });
       const result = convert(pipeline.model, target, {
-        lookupTables: pipeline.lookupTables
+        lookupTables: pipeline.lookupTables,
+        sourceSiem: body.sourceSiem,
+        targetSiem: body.targetSiem
       });
       const response: ConvertResponseDTO = {
         sourceDialect: pipeline.dialect,
         targetDialect: result.targetDialect,
+        sourceSiem: result.sourceSiem,
+        targetSiem: result.targetSiem,
         output: result.output,
         files: result.files,
         diagnostics: result.diagnostics

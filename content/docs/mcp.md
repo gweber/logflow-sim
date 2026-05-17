@@ -55,7 +55,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`
 }
 ```
 
-Restart Claude Desktop. The 7 logflow-sim tools should appear in the
+Restart Claude Desktop. The 8 logflow-sim tools should appear in the
 tool list. Drop a copy of your `rsyslog.conf` (or any other dialect)
 into the chat and ask away.
 
@@ -67,7 +67,8 @@ into the chat and ask away.
 | `logflow_simulate` | Simulate one message through the parsed config, return the step-by-step trace. |
 | `logflow_replay` | Replay a batch (text lines or base64 pcap) and return the aggregate report. |
 | `logflow_diff` | Replay through baseline + overlay variants and return per-output and per-rule deltas. |
-| `logflow_convert` | Emit a parsed config in another dialect (rsyslog → otel, vector → syslog-ng, …). |
+| `logflow_convert` | Emit a parsed config in another dialect (rsyslog → otel, vector → syslog-ng, …). Optional `sourceSiem`/`targetSiem` triggers destination-side value rewriting. |
+| `logflow_retag` | Translate destination-side vocabulary (Splunk → ECS, etc.) without changing pipeline syntax. |
 | `logflow_detect` | Run Sigma rules against a replay corpus, return per-rule firing counts. |
 | `logflow_validate` | Run the full validator-rule suite and return all findings. |
 
