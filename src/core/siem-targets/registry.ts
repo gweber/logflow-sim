@@ -17,6 +17,9 @@ import { lokiTarget } from './loki/index.js';
 import { graylogGelfTarget } from './graylog-gelf/index.js';
 import { microsoftSentinelTarget } from './microsoft-sentinel/index.js';
 import { sumoLogicTarget } from './sumo-logic/index.js';
+import { chronicleUdmTarget } from './chronicle-udm/index.js';
+import { qradarLeefTarget } from './qradar-leef/index.js';
+import { arcsightCefTarget } from './arcsight-cef/index.js';
 
 /**
  * The registry. Order is intentional — `generic` first so it shows up
@@ -30,7 +33,10 @@ const SIEM_TARGETS: Record<string, SIEMTarget> = {
   [lokiTarget.id]: withComputedInverse(lokiTarget),
   [graylogGelfTarget.id]: withComputedInverse(graylogGelfTarget),
   [microsoftSentinelTarget.id]: withComputedInverse(microsoftSentinelTarget),
-  [sumoLogicTarget.id]: withComputedInverse(sumoLogicTarget)
+  [sumoLogicTarget.id]: withComputedInverse(sumoLogicTarget),
+  [chronicleUdmTarget.id]: withComputedInverse(chronicleUdmTarget),
+  [qradarLeefTarget.id]: withComputedInverse(qradarLeefTarget),
+  [arcsightCefTarget.id]: withComputedInverse(arcsightCefTarget)
 };
 
 /**

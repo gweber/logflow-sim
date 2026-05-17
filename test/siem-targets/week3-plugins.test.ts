@@ -48,9 +48,11 @@ function makeOutput(
   };
 }
 
-describe('Week 3: registry size', () => {
-  it('lists 8 SIEM targets', () => {
-    expect(listSIEMTargets().length).toBe(8);
+describe('Week 3: registry growth', () => {
+  it('Week 3 plugins are registered', () => {
+    const ids = listSIEMTargets().map((t) => t.id);
+    expect(ids).toContain('microsoft-sentinel');
+    expect(ids).toContain('sumo-logic');
   });
 });
 

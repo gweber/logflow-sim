@@ -20,6 +20,7 @@ import {
   LOKI_HIGH_CARDINALITY_FIELDS
 } from '../../siem-targets/loki/mappings.js';
 import { SENTINEL_CUSTOM_TABLE_REGEX } from '../../siem-targets/microsoft-sentinel/mappings.js';
+import { UDM_KNOWN_EVENT_TYPES } from '../../siem-targets/chronicle-udm/mappings.js';
 
 const NO_SRC = { file: '<validator>', line: 0, col: 0, offset: 0, length: 0 };
 
@@ -355,6 +356,110 @@ export const sumoMissingSourceCategoryRule: ValidationRule = {
 };
 
 // ---------------------------------------------------------------------------
+// Chronicle UDM
+// ---------------------------------------------------------------------------
+
+export const udmUnknownEventTypeRule: ValidationRule = {
+  id: 'chronicle-udm/unknown-event-type',
+  description:
+    'Chronicle UDM event_type values that aren\'t in the standard ' +
+    'enumeration will land in `GENERIC_EVENT` and lose Chronicle\'s ' +
+    'built-in detection logic.',
+  defaultSeverity: 'warning',
+  siemTargets: ['chronicle-udm'],
+  run(model): Diagnostic[] {
+    const findings: Diagnostic[] = [];
+    for (const o of outputsFor(model, 'chronicle-udm')) {
+      const eventType =
+        (o.params['event_type'] as string | undefined) ??
+        (o.params['metadata.event_type'] as string | undefined);
+      if (typeof eventType === 'string' && eventType && !UDM_KNOWN_EVENT_TYPES.has(eventType)) {
+        findings.push({
+          severity: 'warning',
+          code: 'SIEM_UDM_UNKNOWN_EVENT_TYPE',
+          message:
+            `Chronicle UDM output "${o.name}" sets event_type="${eventType}" ` +
+            `which is not in the standard UDM enumeration. Chronicle will ` +
+            `bucket it as GENERIC_EVENT.`,
+          source: o.source
+        });
+      }
+    }
+    return findings;
+  }
+};
+
+// ---------------------------------------------------------------------------
+// QRadar LEEF
+// ---------------------------------------------------------------------------
+
+export const leefHeaderRequiredRule: ValidationRule = {
+  id: 'qradar-leef/header-required',
+  description:
+    'LEEF events require Vendor / Product / Version / EventID in the ' +
+    'header. Missing slots get placeholder defaults that QRadar parses ' +
+    'as "unknown vendor".',
+  defaultSeverity: 'info',
+  siemTargets: ['qradar-leef'],
+  run(model): Diagnostic[] {
+    const findings: Diagnostic[] = [];
+    for (const o of outputsFor(model, 'qradar-leef')) {
+      const missing: string[] = [];
+      for (const k of ['vendor', 'product', 'version', 'eventID']) {
+        if (!(k in o.params) && !(k[0].toUpperCase() + k.slice(1) in o.params)) {
+          missing.push(k);
+        }
+      }
+      if (missing.length > 0) {
+        findings.push({
+          severity: 'info',
+          code: 'SIEM_LEEF_HEADER_INCOMPLETE',
+          message:
+            `LEEF output "${o.name}" is missing header slots: ${missing.join(', ')}. ` +
+            `Placeholders will be emitted; QRadar's DSM will treat events as ` +
+            `coming from "unknown vendor / unknown product".`,
+          source: o.source
+        });
+      }
+    }
+    return findings;
+  }
+};
+
+// ---------------------------------------------------------------------------
+// ArcSight CEF
+// ---------------------------------------------------------------------------
+
+export const cefSeverityRangeRule: ValidationRule = {
+  id: 'arcsight-cef/severity-range',
+  description:
+    'CEF severity must be an integer 0..10. Out-of-range values are ' +
+    'clamped at render time and may not reflect the operator\'s intent.',
+  defaultSeverity: 'warning',
+  siemTargets: ['arcsight-cef'],
+  run(model): Diagnostic[] {
+    const findings: Diagnostic[] = [];
+    for (const o of outputsFor(model, 'arcsight-cef')) {
+      const sev = o.params['severity'] ?? o.params['Severity'] ?? o.params['sev'];
+      if (sev === undefined) continue;
+      const n = Number(sev);
+      if (!Number.isFinite(n) || n < 0 || n > 10) {
+        findings.push({
+          severity: 'warning',
+          code: 'SIEM_CEF_SEVERITY_OUT_OF_RANGE',
+          message:
+            `CEF output "${o.name}" sets severity=${String(sev)} which is ` +
+            `outside the 0..10 range. The renderer will clamp; consider ` +
+            `setting an explicit valid value.`,
+          source: o.source
+        });
+      }
+    }
+    return findings;
+  }
+};
+
+// ---------------------------------------------------------------------------
 
 export const SIEM_TARGET_RULES: ValidationRule[] = [
   splunkMissingSourcetypeRule,
@@ -364,7 +469,10 @@ export const SIEM_TARGET_RULES: ValidationRule[] = [
   lokiNoLabelsRule,
   gelfCustomFieldPrefixRule,
   sentinelInvalidTableNameRule,
-  sumoMissingSourceCategoryRule
+  sumoMissingSourceCategoryRule,
+  udmUnknownEventTypeRule,
+  leefHeaderRequiredRule,
+  cefSeverityRangeRule
 ];
 
 // ---------------------------------------------------------------------------
