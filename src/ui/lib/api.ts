@@ -24,7 +24,7 @@ const API = `${BASE_URL}/api`;
 
 async function fetchJson<T>(path: string): Promise<T> {
   const r = await fetch(API + withDialect(path), { headers: { Accept: 'application/json' } });
-  if (!r.ok) throw new Error(`${r.status} ${r.statusText}: ${path}`);
+  if (!r.ok) throw await buildHttpError(r, path);
   return (await r.json()) as T;
 }
 
@@ -34,8 +34,37 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify(body)
   });
-  if (!r.ok) throw new Error(`${r.status} ${r.statusText}: ${path}`);
+  if (!r.ok) throw await buildHttpError(r, path);
   return (await r.json()) as T;
+}
+
+/**
+ * Extract the server's error message from a non-OK response. The Express
+ * error-handler returns `{ error: { code, message, context? } }`, so we
+ * prefer that over the raw status text. Falls back to status + path when
+ * the response isn't JSON-shaped (e.g. nginx 502, plain-text proxy errors).
+ *
+ * The HTTP status survives via the error's `.status` property in case
+ * callers want to branch on it.
+ */
+async function buildHttpError(r: Response, path: string): Promise<Error> {
+  let detail = `${r.status} ${r.statusText}`;
+  try {
+    const ct = r.headers.get('content-type') ?? '';
+    if (ct.includes('application/json')) {
+      const body = (await r.json()) as { error?: { message?: string; code?: string } };
+      const msg = body?.error?.message;
+      if (msg) detail = msg + (body.error?.code ? ` (${body.error.code})` : '');
+    } else {
+      const text = await r.text();
+      if (text) detail = text.length > 240 ? text.slice(0, 240) + '…' : text;
+    }
+  } catch {
+    /* Body wasn't readable — keep the status line we already have. */
+  }
+  const err = new Error(`${detail} — ${path}`) as Error & { status?: number };
+  err.status = r.status;
+  return err;
 }
 
 export async function apiGet<T = unknown>(path: string): Promise<T> {
