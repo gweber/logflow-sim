@@ -18,9 +18,18 @@ export interface ParseSigmaResult {
 
 export function parseSigma(file: { path: string; content: string }): ParseSigmaResult {
   const diagnostics: ParseSigmaResult['diagnostics'] = [];
-  let parsed: unknown;
+  // The YAML can take three shapes that all show up in real Sigma feeds:
+  //   • a single rule          (typical SigmaHQ rule file)
+  //   • a top-level array      (some community feeds bundle this way)
+  //   • a multi-document stream with `---` separators (the canonical YAML
+  //     way to concatenate; what the UI's curated-set selector produces)
+  //
+  // `yaml.load` throws on multi-document streams, so we always use
+  // `loadAll` and normalize. Flatten any top-level arrays too so
+  // `[ [ruleA, ruleB], ruleC ]` works.
+  let docs: unknown[];
   try {
-    parsed = yaml.load(file.content);
+    docs = yaml.loadAll(file.content);
   } catch (e) {
     return {
       rules: [],
@@ -29,16 +38,13 @@ export function parseSigma(file: { path: string; content: string }): ParseSigmaR
       ]
     };
   }
-  if (!parsed || typeof parsed !== 'object') {
+  docs = docs.flatMap((d) => (Array.isArray(d) ? d : [d])).filter((d) => d != null);
+  if (docs.length === 0) {
     return {
       rules: [],
       diagnostics: [{ file: file.path, severity: 'error', message: 'Empty or non-object YAML' }]
     };
   }
-
-  // The YAML can be a single rule OR multi-document with collection rules
-  // — community feeds use both. Normalize to an array.
-  const docs = Array.isArray(parsed) ? parsed : [parsed];
   const rules: SigmaRule[] = [];
   for (const doc of docs) {
     if (!doc || typeof doc !== 'object') continue;

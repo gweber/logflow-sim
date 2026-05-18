@@ -38,6 +38,27 @@ level: medium
 `;
 
 describe('detection/sigma', () => {
+  it('parses a multi-document YAML stream into all rules', () => {
+    const stream = `${SSH_FAIL_RULE}\n---\n${KERN_CRASH_RULE}\n`;
+    const { rules, diagnostics } = parseSigma({ path: 'multi.yml', content: stream });
+    expect(diagnostics).toEqual([]);
+    expect(rules).toHaveLength(2);
+    expect(rules.map((r) => r.title)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('SSH'),
+        expect.stringContaining('kernel')
+      ])
+    );
+  });
+
+  it('parses a top-level array of rules', () => {
+    const arr = `- ${SSH_FAIL_RULE.trim().split('\n').join('\n  ')}\n- ${KERN_CRASH_RULE.trim()
+      .split('\n')
+      .join('\n  ')}\n`;
+    const { rules } = parseSigma({ path: 'arr.yml', content: arr });
+    expect(rules.length).toBeGreaterThanOrEqual(2);
+  });
+
   it('parses a Sigma rule with field modifiers', () => {
     const { rules, diagnostics } = parseSigma({ path: 'r.yml', content: SSH_FAIL_RULE });
     expect(diagnostics).toEqual([]);

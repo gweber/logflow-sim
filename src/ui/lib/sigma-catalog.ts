@@ -201,7 +201,10 @@ export function rulesForCategory(categoryId: string): string {
   const yamls = cat.ruleIds
     .map((id) => SIGMA_CATALOG.find((r) => r.id === id)?.yaml ?? '')
     .filter(Boolean);
-  // YAML supports multi-document via `---` separators; the Sigma parser
-  // already handles that shape, so we concatenate without re-parsing.
-  return yamls.join('---\n');
+  // Multi-document YAML: each rule separated by a `---` line. The server's
+  // parser uses `yaml.loadAll` so this is the canonical stream format.
+  // We also make sure the previous doc ends with a newline before the
+  // separator — js-yaml is strict about `---` being at the start of a
+  // line.
+  return yamls.map((y) => (y.endsWith('\n') ? y : y + '\n')).join('---\n');
 }
