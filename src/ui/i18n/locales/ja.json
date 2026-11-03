@@ -10,7 +10,7 @@
   "nav.tests": "テスト",
   "nav.blog": "ブログ",
   "nav.docs": "ドキュメント",
-  "home.hero.eyebrow": "オープンソース · in-process · 現在はrsyslog、他のディアレクトも近日対応",
+  "home.hero.eyebrow": "オープンソース · in-process · 10 の設定ディアレクト · 11 の SIEM ターゲット",
   "home.hero.title": "すべてのログがどこへ行くか正確に把握",
   "home.hero.description": "{name} はログパイプライン設定をパースし、正規化モデルを構築して syslog メッセージをシミュレーション — すべての条件、ルックアップ、変数、アクションを完全なソース位置情報付きでトレースします。regexハックなし、rsyslogへのシェルアウトなし。",
   "home.hero.cta.simulator": "シミュレータを開く",

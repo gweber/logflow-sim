@@ -10,7 +10,7 @@
   "nav.tests": "Тесты",
   "nav.blog": "Блог",
   "nav.docs": "Docs",
-  "home.hero.eyebrow": "Open source · in-process · rsyslog сейчас, другие диалекты на подходе",
+  "home.hero.eyebrow": "Open source · in-process · 10 диалектов конфигурации · 11 целей SIEM",
   "home.hero.title": "Точно знайте, куда идёт каждый лог",
   "home.hero.description": "{name} парсит вашу конфигурацию log-пайплайна, строит нормализованную модель и симулирует syslog-сообщение через неё — выдавая трейс каждого условия, lookup-а, переменной и action-а с полными source-локациями. Никаких regex-хаков, никаких shell-out-ов в rsyslog.",
   "home.hero.cta.simulator": "Открыть симулятор",

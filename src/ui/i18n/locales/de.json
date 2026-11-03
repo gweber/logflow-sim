@@ -11,7 +11,7 @@
   "nav.blog": "Blog",
   "nav.docs": "Doku",
 
-  "home.hero.eyebrow": "Open Source · in-process · rsyslog jetzt, weitere Dialekte folgen",
+  "home.hero.eyebrow": "Open Source · in-process · 10 Konfig-Dialekte · 11 SIEM-Ziele",
   "home.hero.title": "Wisse genau, wo jedes Log landet",
   "home.hero.description": "{name} parst deine Log-Pipeline-Konfiguration, baut ein normalisiertes Modell und simuliert eine syslog-Nachricht durch das Routing — mit Trace jeder Bedingung, jedes Lookups, jeder Variable und Aktion samt vollständiger Quell-Lokation. Keine Regex-Hacks, kein Shell-Out auf rsyslog.",
   "home.hero.cta.simulator": "Simulator öffnen",

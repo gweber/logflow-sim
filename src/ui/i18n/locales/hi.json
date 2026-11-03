@@ -10,7 +10,7 @@
   "nav.tests": "Tests",
   "nav.blog": "Blog",
   "nav.docs": "Docs",
-  "home.hero.eyebrow": "ओपन सोर्स · इन-प्रोसेस · अभी rsyslog, और डायलेक्ट जल्द ही",
+  "home.hero.eyebrow": "ओपन सोर्स · इन-प्रोसेस · 10 कॉन्फ़िग डायलेक्ट · 11 SIEM लक्ष्य",
   "home.hero.title": "जानें हर लॉग कहाँ जाता है",
   "home.hero.description": "{name} आपके लॉग-पाइपलाइन कॉन्फ़िग को पार्स करता है, एक नॉर्मलाइज़्ड मॉडल बनाता है, और syslog मैसेज को सिमुलेट करता है — हर कंडीशन, लुकअप, वेरिएबल और एक्शन का पूरा सोर्स लोकेशन ट्रेस देता है। कोई regex हैक नहीं, rsyslog पर shell-out नहीं।",
   "home.hero.cta.simulator": "सिमुलेटर खोलें",

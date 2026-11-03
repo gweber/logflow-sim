@@ -10,7 +10,7 @@
   "nav.tests": "Testler",
   "nav.blog": "Blog",
   "nav.docs": "Docs",
-  "home.hero.eyebrow": "Açık kaynak · in-process · şimdilik rsyslog, diğer diyalektler yolda",
+  "home.hero.eyebrow": "Açık kaynak · in-process · 10 yapılandırma diyalekti · 11 SIEM hedefi",
   "home.hero.title": "Her log'un nereye gittiğini tam olarak bilin",
   "home.hero.description": "{name} log-pipeline yapılandırmanızı parse eder, normalize edilmiş bir model oluşturur ve bir syslog mesajını simüle eder — her koşulun, lookup'un, değişkenin ve action'un tam kaynak konumlu izini verir. Regex hack yok, rsyslog'a shell-out yok.",
   "home.hero.cta.simulator": "Simülatörü aç",

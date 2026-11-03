@@ -10,7 +10,7 @@
   "nav.tests": "Tests",
   "nav.blog": "Blog",
   "nav.docs": "Docs",
-  "home.hero.eyebrow": "Nguồn mở · in-process · rsyslog hôm nay, các phương ngữ khác sắp đến",
+  "home.hero.eyebrow": "Nguồn mở · in-process · 10 phương ngữ cấu hình · 11 đích SIEM",
   "home.hero.title": "Biết chính xác mọi log đi về đâu",
   "home.hero.description": "{name} phân tích cấu hình log-pipeline của bạn, xây dựng mô hình chuẩn hóa và mô phỏng một thông điệp syslog qua nó — phát ra trace của mỗi điều kiện, lookup, biến và action với vị trí nguồn đầy đủ. Không hack regex, không shell-out đến rsyslog.",
   "home.hero.cta.simulator": "Mở simulator",

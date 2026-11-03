@@ -10,7 +10,7 @@
   "nav.tests": "测试",
   "nav.blog": "博客",
   "nav.docs": "文档",
-  "home.hero.eyebrow": "开源 · 进程内 · 当前支持 rsyslog,更多方言即将到来",
+  "home.hero.eyebrow": "开源 · 进程内 · 10 种配置方言 · 11 个 SIEM 目标",
   "home.hero.title": "确切了解每条日志的去向",
   "home.hero.description": "{name} 解析您的日志管道配置,构建归一化模型,并模拟 syslog 消息穿过 — 输出每个条件、查找、变量和操作的完整源位置追踪。无 regex 黑魔法,无需调用 rsyslog 命令。",
   "home.hero.cta.simulator": "打开模拟器",

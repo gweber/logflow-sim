@@ -10,7 +10,7 @@
   "nav.tests": "Tests",
   "nav.blog": "Blog",
   "nav.docs": "Docs",
-  "home.hero.eyebrow": "Open source · in-process · rsyslog hoy, más dialectos en camino",
+  "home.hero.eyebrow": "Open source · in-process · 10 dialectos de configuración · 11 destinos SIEM",
   "home.hero.title": "Sepa exactamente a dónde va cada log",
   "home.hero.description": "{name} analiza tu configuración de pipeline de logs, construye un modelo normalizado y simula un mensaje syslog a través de él — emitiendo una traza de cada condición, lookup, variable y acción con ubicaciones de origen completas. Sin hacks regex, sin shell-out a rsyslog.",
   "home.hero.cta.simulator": "Abrir el simulador",
